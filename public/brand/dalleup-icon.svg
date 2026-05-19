@@ -1,0 +1,15 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Icône DalleUp</title>
+  <desc id="desc">Icône carrée DalleUp orange avec symbole blanc et flèche verte.</desc>
+  <rect width="512" height="512" rx="108" fill="#ff4f0a"/>
+  <path d="M144 154h116c93 0 145 55 131 139-13 83-81 137-174 137H105l39-276Z" fill="white"/>
+  <path d="M171 230h111c47 0 75 24 69 62-6 37-42 61-88 61H137l34-123Z" fill="#ff4f0a"/>
+  <path d="M91 216h80" stroke="white" stroke-width="20" stroke-linecap="round"/>
+  <path d="M69 257h136" stroke="white" stroke-width="20" stroke-linecap="round"/>
+  <path d="M69 299h149" stroke="white" stroke-width="20" stroke-linecap="round"/>
+  <path d="M134 306h216" stroke="white" stroke-width="12" stroke-linecap="round"/>
+  <path d="M164 301c23-63 80-96 137-93" stroke="white" stroke-width="11" stroke-linecap="round"/>
+  <path d="M195 279c20-29 53-46 92-46" stroke="white" stroke-width="8" stroke-linecap="round"/>
+  <path d="M294 179a14 14 0 1 0 0-28 14 14 0 0 0 0 28Z" fill="#ff4f0a"/>
+  <path d="M350 94l77-12c9-1 15 8 10 16l-45 73c-5 8-18 6-21-3l-8-28-34 25-17-24 34-25-26-10c-9-4-8-17 2-19l28 7Z" fill="#8bd80d"/>
+</svg>

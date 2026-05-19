@@ -1,0 +1,25 @@
+<svg width="1024" height="576" viewBox="0 0 1024 576" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">DalleUp</title>
+  <desc id="desc">Logo DalleUp avec le slogan Commande. Chill. On livre.</desc>
+  <rect width="1024" height="576" fill="white"/>
+  <g transform="translate(74 150)">
+    <path d="M74 52h84c84 0 132 48 120 124-12 77-74 124-158 124H36L74 52Z" fill="#ff4f0a"/>
+    <path d="M143 115c60 0 96 31 88 83-8 51-54 83-115 83H84l25-166h34Z" fill="white"/>
+    <path d="M15 90h60" stroke="#ff4f0a" stroke-width="14" stroke-linecap="round"/>
+    <path d="M0 123h94" stroke="#ff4f0a" stroke-width="14" stroke-linecap="round"/>
+    <path d="M0 156h108" stroke="#ff4f0a" stroke-width="14" stroke-linecap="round"/>
+    <path d="M67 191h167" stroke="#111820" stroke-width="8" stroke-linecap="round"/>
+    <path d="M88 188c18-49 62-75 107-73" stroke="#ff4f0a" stroke-width="8" stroke-linecap="round"/>
+    <path d="M112 170c16-23 42-36 73-36" stroke="#ff4f0a" stroke-width="5" stroke-linecap="round"/>
+    <path d="M183 95a12 12 0 1 0 0-24 12 12 0 0 0 0 24Z" fill="white"/>
+    <path d="M260 28l58-9c7-1 12 6 8 12l-34 54c-4 6-14 5-16-2l-6-20-25 18-12-17 25-18-19-8c-7-3-6-13 1-14l20 4Z" fill="#8bd80d"/>
+  </g>
+  <g transform="translate(374 187)">
+    <text x="0" y="110" font-family="Arial Black, Arial, sans-serif" font-size="128" font-weight="900" font-style="italic" fill="#111820">Dalle</text>
+    <text x="389" y="110" font-family="Arial Black, Arial, sans-serif" font-size="128" font-weight="900" font-style="italic" fill="#ff4f0a">Up</text>
+    <path d="M486 15l40-45c5-6 15-3 16 5l9 70c1 8-9 13-15 7l-16-15-35 44-17-14 35-44-18-8Z" fill="#ff4f0a" transform="translate(0 5)"/>
+    <text x="0" y="176" font-family="Arial Black, Arial, sans-serif" font-size="41" font-weight="900" font-style="italic" fill="#111820">Commande.</text>
+    <text x="238" y="176" font-family="Arial Black, Arial, sans-serif" font-size="41" font-weight="900" font-style="italic" fill="#8bd80d">Chill.</text>
+    <text x="360" y="176" font-family="Arial Black, Arial, sans-serif" font-size="41" font-weight="900" font-style="italic" fill="#111820">On livre.</text>
+  </g>
+</svg>

@@ -1,0 +1,412 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CLIENT
+  RESTAURANT
+  DELIVERY_DRIVER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  ACCEPTED
+  PREPARING
+  READY
+  DRIVER_ASSIGNED
+  PICKED_UP
+  ON_THE_WAY
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CASH_ON_DELIVERY
+  MTN_MOMO
+  MOOV_MONEY
+  CARD
+}
+
+enum DeliveryStatus {
+  PENDING
+  ASSIGNED
+  PICKED_UP
+  ON_THE_WAY
+  DELIVERED
+  FAILED
+}
+
+enum RestaurantStatus {
+  PENDING
+  APPROVED
+  SUSPENDED
+  CLOSED
+}
+
+enum DriverStatus {
+  AVAILABLE
+  OFFLINE
+  ON_DELIVERY
+  SUSPENDED
+}
+
+enum BillingInterval {
+  MONTHLY
+  YEARLY
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  OPEN
+  PAID
+  VOID
+  UNCOLLECTIBLE
+}
+
+enum AdminAuditAction {
+  RESTAURANT_STATUS_UPDATED
+  DRIVER_STATUS_UPDATED
+  INVOICE_STATUS_UPDATED
+  FINANCIAL_REPORT_EXPORTED
+  BILLING_NOTIFICATION_STATUS_UPDATED
+  BILLING_NOTIFICATIONS_EXPORTED
+}
+
+enum BillingNotificationType {
+  SUBSCRIPTION_UPDATED
+  INVOICE_GENERATED
+  INVOICE_PAID
+  INVOICE_STATUS_UPDATED
+}
+
+enum BillingNotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model User {
+  id            String       @id @default(cuid())
+  name          String
+  email         String       @unique
+  image         String?
+  passwordHash  String?
+  phone         String?
+  role          UserRole     @default(CLIENT)
+  driverStatus  DriverStatus?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  restaurants   Restaurant[]
+  addresses     Address[]
+  orders        Order[]      @relation("CustomerOrders")
+  deliveries    Delivery[]   @relation("DriverDeliveries")
+  reviews       Review[]
+  favorites     Favorite[]
+  accounts      Account[]
+  sessions      Session[]
+  adminAuditLogs AdminAuditLog[]
+  billingNotifications BillingNotification[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model RestaurantCategory {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  restaurants Restaurant[]
+}
+
+model Restaurant {
+  id          String             @id @default(cuid())
+  ownerId     String
+  categoryId  String?
+  name        String
+  slug        String             @unique
+  description String
+  image       String?
+  address     String
+  phone       String?
+  status      RestaurantStatus   @default(PENDING)
+  rating      Float              @default(0)
+  deliveryFee Int                @default(1200)
+  minDelayMin Int                @default(20)
+  maxDelayMin Int                @default(40)
+  isPopular   Boolean            @default(false)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  owner       User               @relation(fields: [ownerId], references: [id])
+  category    RestaurantCategory? @relation(fields: [categoryId], references: [id])
+  menuCategories MenuCategory[]
+  menuItems   MenuItem[]
+  orders      Order[]
+  reviews     Review[]
+  favorites   Favorite[]
+  subscriptions RestaurantSubscription[]
+  invoices    Invoice[]
+  billingNotifications BillingNotification[]
+}
+
+model MenuCategory {
+  id           String     @id @default(cuid())
+  restaurantId String
+  name         String
+  sortOrder    Int        @default(0)
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  items        MenuItem[]
+}
+
+model MenuItem {
+  id          String        @id @default(cuid())
+  restaurantId String
+  categoryId  String?
+  name        String
+  description String
+  price       Int
+  image       String?
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  restaurant  Restaurant    @relation(fields: [restaurantId], references: [id])
+  category    MenuCategory? @relation(fields: [categoryId], references: [id])
+  orderItems  OrderItem[]
+}
+
+model Order {
+  id             String       @id @default(cuid())
+  orderNumber    String       @unique
+  customerId     String
+  restaurantId   String
+  addressId      String?
+  status         OrderStatus  @default(PENDING)
+  subtotal       Int
+  deliveryFee    Int
+  total          Int
+  note           String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  customer       User         @relation("CustomerOrders", fields: [customerId], references: [id])
+  restaurant     Restaurant   @relation(fields: [restaurantId], references: [id])
+  address        Address?     @relation(fields: [addressId], references: [id])
+  items          OrderItem[]
+  delivery       Delivery?
+  payment        Payment?
+  review         Review?
+}
+
+model OrderItem {
+  id         String   @id @default(cuid())
+  orderId    String
+  menuItemId String
+  quantity   Int
+  unitPrice  Int
+  total      Int
+  order      Order    @relation(fields: [orderId], references: [id])
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+}
+
+model Delivery {
+  id         String         @id @default(cuid())
+  orderId    String         @unique
+  driverId   String?
+  status     DeliveryStatus @default(PENDING)
+  distanceKm Float?
+  pickedAt   DateTime?
+  deliveredAt DateTime?
+  order      Order          @relation(fields: [orderId], references: [id])
+  driver     User?          @relation("DriverDeliveries", fields: [driverId], references: [id])
+}
+
+model Address {
+  id        String  @id @default(cuid())
+  userId    String
+  label     String
+  street    String
+  city      String
+  zone      String?
+  latitude  Float?
+  longitude Float?
+  isDefault Boolean @default(false)
+  user      User    @relation(fields: [userId], references: [id])
+  orders    Order[]
+}
+
+model Payment {
+  id          String        @id @default(cuid())
+  orderId     String        @unique
+  method      PaymentMethod @default(CASH_ON_DELIVERY)
+  status      PaymentStatus @default(PENDING)
+  amount      Int
+  providerRef String?
+  paidAt      DateTime?
+  order       Order         @relation(fields: [orderId], references: [id])
+}
+
+model BillingPlan {
+  id             String                   @id @default(cuid())
+  name           String                   @unique
+  description    String?
+  monthlyFee     Int                      @default(0)
+  commissionRate Int                      @default(15)
+  interval       BillingInterval          @default(MONTHLY)
+  isActive       Boolean                  @default(true)
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+  subscriptions  RestaurantSubscription[]
+}
+
+model RestaurantSubscription {
+  id           String             @id @default(cuid())
+  restaurantId String
+  planId       String
+  status       SubscriptionStatus @default(ACTIVE)
+  startsAt     DateTime           @default(now())
+  endsAt       DateTime?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  restaurant   Restaurant         @relation(fields: [restaurantId], references: [id])
+  plan         BillingPlan        @relation(fields: [planId], references: [id])
+  invoices     Invoice[]
+}
+
+model Invoice {
+  id             String                  @id @default(cuid())
+  restaurantId   String
+  subscriptionId String?
+  number         String                  @unique
+  status         InvoiceStatus           @default(OPEN)
+  amount         Int
+  commission     Int                     @default(0)
+  dueAt          DateTime?
+  paidAt         DateTime?
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+  restaurant     Restaurant              @relation(fields: [restaurantId], references: [id])
+  subscription   RestaurantSubscription? @relation(fields: [subscriptionId], references: [id])
+}
+
+model AdminAuditLog {
+  id          String           @id @default(cuid())
+  adminId     String
+  action      AdminAuditAction
+  targetType  String
+  targetId    String?
+  targetLabel String?
+  metadata    Json?
+  createdAt   DateTime         @default(now())
+  admin       User             @relation(fields: [adminId], references: [id])
+
+  @@index([adminId, createdAt])
+  @@index([action, createdAt])
+}
+
+model BillingNotification {
+  id           String                    @id @default(cuid())
+  userId       String?
+  restaurantId String?
+  type         BillingNotificationType
+  status       BillingNotificationStatus @default(PENDING)
+  title        String
+  message      String
+  metadata     Json?
+  createdAt    DateTime                  @default(now())
+  sentAt       DateTime?
+  user         User?                     @relation(fields: [userId], references: [id])
+  restaurant   Restaurant?               @relation(fields: [restaurantId], references: [id])
+
+  @@index([status, createdAt])
+  @@index([restaurantId, createdAt])
+}
+
+model Review {
+  id           String     @id @default(cuid())
+  userId       String
+  restaurantId String
+  orderId      String?    @unique
+  rating       Int
+  comment      String?
+  createdAt    DateTime   @default(now())
+  user         User       @relation(fields: [userId], references: [id])
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  order        Order?     @relation(fields: [orderId], references: [id])
+}
+
+model Favorite {
+  id           String     @id @default(cuid())
+  userId       String
+  restaurantId String
+  createdAt    DateTime   @default(now())
+  user         User       @relation(fields: [userId], references: [id])
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@unique([userId, restaurantId])
+}
+
+model PromoCode {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  description String?
+  discountPct Int?
+  discountAmount Int?
+  startsAt    DateTime?
+  endsAt      DateTime?
+  isActive    Boolean  @default(true)
+}
+
+model PlatformSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}

@@ -1,0 +1,1 @@
+export default function Page(){return <main className="px-4 py-6"><div className="mx-auto max-w-2xl"><h1 className="text-3xl font-black">Adresses</h1><div className="mt-6 rounded-[2rem] bg-white p-5 shadow-sm">Maison · Cadjèhoun, Cotonou</div></div></main>}

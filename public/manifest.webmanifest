@@ -1,0 +1,17 @@
+{
+  "name": "DalleUp",
+  "short_name": "DalleUp",
+  "description": "Commande. Chill. On livre.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#171717",
+  "theme_color": "#ff6b1a",
+  "icons": [
+    {
+      "src": "/brand/dalleup-icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
