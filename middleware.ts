@@ -1,6 +1,14 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
-import { getDashboardPathByRole, type UserRole } from "@/lib/auth/roles";
+
+type UserRole = "CLIENT" | "RESTAURANT" | "DELIVERY_DRIVER" | "ADMIN";
+
+function getDashboardPathByRole(role: UserRole) {
+  if (role === "ADMIN") return "/admin";
+  if (role === "RESTAURANT") return "/restaurant/dashboard";
+  if (role === "DELIVERY_DRIVER") return "/driver/dashboard";
+  return "/app";
+}
 
 const accessRules: { prefix: string; roles: UserRole[] }[] = [
   { prefix: "/app", roles: ["CLIENT", "ADMIN"] },
