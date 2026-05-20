@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db/prisma";
 
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -12,6 +14,8 @@ export async function POST(request: Request) {
     const confirmPassword = String(body.confirmPassword ?? "");
 
     if (!name || !email || !password || !confirmPassword) return NextResponse.json({ message: "Tous les champs obligatoires doivent être remplis." }, { status: 400 });
+    if (name.length < 2) return NextResponse.json({ message: "Le nom doit contenir au moins 2 caractères." }, { status: 400 });
+    if (!emailRegex.test(email)) return NextResponse.json({ message: "Adresse email invalide." }, { status: 400 });
     if (password.length < 8) return NextResponse.json({ message: "Le mot de passe doit contenir au moins 8 caractères." }, { status: 400 });
     if (password !== confirmPassword) return NextResponse.json({ message: "Les mots de passe ne correspondent pas." }, { status: 400 });
 
