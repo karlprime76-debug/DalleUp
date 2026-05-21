@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useCart } from "@/lib/cart/cart-store";
-import { createLocalOrder } from "@/lib/orders/local-orders";
 import { formatPrice } from "@/lib/pricing/delivery";
 
 const addresses = ["Maison · Cadjèhoun, Cotonou", "Bureau · Haie Vive, Cotonou", "Campus · Calavi centre"];
@@ -33,13 +32,16 @@ export function CheckoutPageClient() {
         router.push(`/app/orders/${payload.order?.id ?? payload.order?.orderNumber}`);
         return;
       }
-      setMessage("Base indisponible : commande enregistrée localement.");
+      if (response.status === 401) {
+        router.push("/login");
+        return;
+      }
+      const payload = await response.json().catch(() => null);
+      setMessage(payload?.message ?? "Commande impossible pour le moment.");
     } catch {
-      setMessage("Mode hors ligne : commande enregistrée localement.");
+      setMessage("Commande impossible : vérifie ta connexion puis réessaie.");
     }
-    const order = createLocalOrder({ restaurantName: items[0].restaurantName, items, subtotal, deliveryFee, total, paymentMethod: "CASH_ON_DELIVERY", address: addresses[0] });
-    clearCart();
-    router.push(`/app/orders/${order.id}`);
+    setLoading(false);
   }
 
   return (

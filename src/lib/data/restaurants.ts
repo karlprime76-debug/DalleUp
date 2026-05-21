@@ -1,34 +1,29 @@
 import { prisma } from "@/lib/db/prisma";
-import { categories as mockCategories, menuItems as mockMenuItems, restaurants as mockRestaurants } from "@/lib/mock-data";
 import { mapMenuItem, mapRestaurant, type AppMenuItem, type AppRestaurant } from "@/lib/data/mappers";
 
 function warnFallback(source: string, error?: unknown) {
   if (process.env.NODE_ENV !== "production") console.warn(`[DalleUp data fallback] ${source}`, error);
 }
 
-function enrichMockMenuItems(items = mockMenuItems): AppMenuItem[] {
-  return items.map((item) => ({ ...item, restaurantName: mockRestaurants.find((restaurant) => restaurant.id === item.restaurantId)?.name }));
-}
-
 export async function getRestaurants(): Promise<AppRestaurant[]> {
   try {
     const restaurants = await prisma.restaurant.findMany({ include: { category: true }, orderBy: [{ isPopular: "desc" }, { rating: "desc" }] });
-    if (!restaurants.length) return mockRestaurants;
+    if (!restaurants.length) return [];
     return restaurants.map(mapRestaurant);
   } catch (error) {
     warnFallback("getRestaurants", error);
-    return mockRestaurants;
+    return [];
   }
 }
 
 export async function getPopularRestaurants(): Promise<AppRestaurant[]> {
   try {
     const restaurants = await prisma.restaurant.findMany({ where: { isPopular: true }, include: { category: true }, orderBy: { rating: "desc" }, take: 6 });
-    if (!restaurants.length) return mockRestaurants.filter((restaurant) => restaurant.popular);
+    if (!restaurants.length) return [];
     return restaurants.map(mapRestaurant);
   } catch (error) {
     warnFallback("getPopularRestaurants", error);
-    return mockRestaurants.filter((restaurant) => restaurant.popular);
+    return [];
   }
 }
 
@@ -39,7 +34,7 @@ export async function getRestaurantById(id: string): Promise<AppRestaurant | nul
   } catch (error) {
     warnFallback("getRestaurantById", error);
   }
-  return mockRestaurants.find((restaurant) => restaurant.id === id) ?? null;
+  return null;
 }
 
 export async function getRestaurantsByCategory(category: string): Promise<AppRestaurant[]> {
@@ -50,11 +45,11 @@ export async function getRestaurantsByCategory(category: string): Promise<AppRes
 export async function getRestaurantCategories(): Promise<string[]> {
   try {
     const categories = await prisma.restaurantCategory.findMany({ orderBy: { name: "asc" } });
-    if (!categories.length) return mockCategories;
+    if (!categories.length) return [];
     return categories.map((category) => category.name);
   } catch (error) {
     warnFallback("getRestaurantCategories", error);
-    return mockCategories;
+    return [];
   }
 }
 
@@ -67,16 +62,16 @@ export async function getMenuItemsByRestaurantId(restaurantId: string): Promise<
   } catch (error) {
     warnFallback("getMenuItemsByRestaurantId", error);
   }
-  return enrichMockMenuItems(mockMenuItems.filter((item) => item.restaurantId === restaurantId));
+  return [];
 }
 
 export async function getTrendingMenuItems(): Promise<AppMenuItem[]> {
   try {
     const items = await prisma.menuItem.findMany({ where: { isActive: true }, include: { restaurant: true, category: true }, orderBy: { createdAt: "desc" }, take: 8 });
-    if (!items.length) return enrichMockMenuItems(mockMenuItems.slice(0, 8));
+    if (!items.length) return [];
     return items.map(mapMenuItem);
   } catch (error) {
     warnFallback("getTrendingMenuItems", error);
-    return enrichMockMenuItems(mockMenuItems.slice(0, 8));
+    return [];
   }
 }

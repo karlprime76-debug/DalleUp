@@ -13,6 +13,7 @@ export type OpsOrder = {
   deliveryStatus?: string;
   address: string;
   createdAt: string;
+  items: { name: string; quantity: number; total: number }[];
 };
 
 export type OpsRestaurant = {
@@ -64,14 +65,14 @@ function warnFallback(source: string, error?: unknown) {
 }
 
 function mockOpsOrders(): OpsOrder[] {
-  return mockOrders.map((order) => ({ ...order, dbId: undefined }));
+  return mockOrders.map((order) => ({ ...order, dbId: undefined, items: [] }));
 }
 
 export async function getOpsOrders(scope?: { restaurantOwnerId?: string; driverId?: string }): Promise<OpsOrder[]> {
   try {
     const orders = await prisma.order.findMany({
       where: scope?.restaurantOwnerId ? { restaurant: { ownerId: scope.restaurantOwnerId } } : scope?.driverId ? { delivery: { driverId: scope.driverId } } : undefined,
-      include: { customer: true, restaurant: true, address: true, delivery: { include: { driver: true } } },
+      include: { customer: true, restaurant: true, address: true, delivery: { include: { driver: true } }, items: { include: { menuItem: true } } },
       orderBy: { createdAt: "desc" },
       take: 20
     });
@@ -87,7 +88,8 @@ export async function getOpsOrders(scope?: { restaurantOwnerId?: string; driverI
       driverId: order.delivery?.driverId ?? undefined,
       deliveryStatus: order.delivery?.status ?? undefined,
       address: order.address ? `${order.address.street}, ${order.address.city}` : "Adresse client",
-      createdAt: order.createdAt.toLocaleString("fr-FR")
+      createdAt: order.createdAt.toLocaleString("fr-FR"),
+      items: order.items.map((item) => ({ name: item.menuItem.name, quantity: item.quantity, total: item.total }))
     }));
   } catch (error) {
     warnFallback("getOpsOrders", error);
