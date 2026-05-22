@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db/prisma";
-import { sendEmail } from "@/lib/email/send-email";
-import { welcomeClient, welcomeRestaurant, welcomeDriver } from "@/lib/email/templates";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const allowedPublicRoles = ["CLIENT", "RESTAURANT", "DELIVERY_DRIVER"] as const;
@@ -38,13 +36,6 @@ export async function POST(request: Request) {
 
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({ data: { name, email, phone: phone || null, passwordHash, role: requestedRole as typeof allowedPublicRoles[number] }, select: { id: true, name: true, email: true, role: true } });
-
-    try {
-      const template = requestedRole === "RESTAURANT" ? welcomeRestaurant(name) : requestedRole === "DELIVERY_DRIVER" ? welcomeDriver(name) : welcomeClient(name);
-      await sendEmail({ to: email, subject: template.subject, html: template.html, text: template.text });
-    } catch {
-      /* L'email ne bloque pas l'inscription */
-    }
 
     return NextResponse.json({ success: true, message: "Compte créé avec succès.", role: user.role, user }, { status: 201 });
   } catch (error) {
