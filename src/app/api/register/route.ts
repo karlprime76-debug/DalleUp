@@ -9,6 +9,10 @@ function getPrismaCode(error: unknown) {
   return typeof error === "object" && error && "code" in error ? String(error.code) : null;
 }
 
+function getErrorName(error: unknown) {
+  return error instanceof Error ? error.name : typeof error;
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -40,8 +44,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, message: "Compte créé avec succès.", role: user.role, user }, { status: 201 });
   } catch (error) {
     const code = getPrismaCode(error);
-    console.warn("[DalleUp register] failed", { code });
+    const name = getErrorName(error);
+    console.warn("[DalleUp register] failed", { code, name });
     if (code === "P2002") return NextResponse.json({ message: "Cet email est déjà utilisé." }, { status: 409 });
-    return NextResponse.json({ message: "Impossible de créer le compte pour le moment." }, { status: 500 });
+    return NextResponse.json({ message: "Impossible de créer le compte pour le moment.", debugCode: code, debugName: name }, { status: 500 });
   }
 }
