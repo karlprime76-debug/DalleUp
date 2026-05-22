@@ -53,7 +53,7 @@ export async function RoleDashboard({ role, title }: { role: keyof typeof navByR
       </div>
       <div className="mt-6 grid gap-5 xl:grid-cols-[1fr_360px]">
         <Card className="overflow-hidden">
-          <div className="border-b border-black/5 p-5"><h2 className="text-xl font-black">Commandes récentes</h2><p className="text-sm text-neutral-500">Statuts lisibles et actions prêtes à connecter.</p></div>
+          <div className="border-b border-black/5 p-5"><h2 className="text-xl font-black">Commandes récentes</h2><p className="text-sm text-neutral-500">Suivez vos commandes en temps réel.</p></div>
           <div className="divide-y divide-black/5">{orders.map((order) => <div key={order.id} className="grid gap-3 p-5 md:grid-cols-[120px_1fr_160px_130px]"><p className="font-black">{order.id}</p><div><p className="font-bold">{order.restaurant}</p><p className="text-sm text-neutral-500">{order.customer} · {order.address}</p></div><OrderStatusBadge status={order.status} /><button className="rounded-2xl bg-dalle-charcoal px-4 py-2 text-sm font-black text-white">Voir</button></div>)}</div>
         </Card>
         <Card className="p-5">
@@ -63,7 +63,7 @@ export async function RoleDashboard({ role, title }: { role: keyof typeof navByR
             {role === "restaurant" ? <><Badge variant="orange">Accepter commande</Badge><Badge variant="lime">Plat disponible</Badge><Badge variant="soft">Voir ventes</Badge></> : null}
             {role === "driver" ? <><Badge variant="orange">Marquer récupérée</Badge><Badge variant="lime">Marquer livrée</Badge><Badge variant="soft">Voir gains</Badge></> : null}
           </div>
-          <div className="mt-6 rounded-3xl bg-neutral-50 p-4"><Users className="text-dalle-orange" /><p className="mt-3 font-black">DalleUp Ops</p><p className="mt-1 text-sm text-neutral-500">Interface cohérente avec la marque, prête pour les vraies APIs.</p></div>
+          <div className="mt-6 rounded-3xl bg-neutral-50 p-4"><Users className="text-dalle-orange" /><p className="mt-3 font-black">Centre d&apos;opérations DalleUp</p><p className="mt-1 text-sm text-neutral-500">Gérez vos commandes, vos livraisons et vos revenus en un seul endroit.</p></div>
         </Card>
       </div>
     </DashboardShell>

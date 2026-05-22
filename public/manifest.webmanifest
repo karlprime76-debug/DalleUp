@@ -2,7 +2,7 @@
   "name": "DalleUp",
   "short_name": "DalleUp",
   "description": "Commande. Chill. On livre.",
-  "start_url": "/",
+  "start_url": "/app",
   "display": "standalone",
   "background_color": "#171717",
   "theme_color": "#ff6b1a",

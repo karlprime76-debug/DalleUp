@@ -1,7 +1,7 @@
 export const site = {
   name: "DalleUp",
   slogan: "Commande. Chill. On livre.",
-  description: "La nouvelle app mobile-first pour commander tes repas préférés et suivre ta livraison en temps réel.",
+  description: "Commandez vos repas préférés au Bénin, payez à la réception via Mobile Money et suivez votre livraison en temps réel.",
   deliveryFee: 1200,
   currency: "FCFA"
 };

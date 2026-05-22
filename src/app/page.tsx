@@ -1,19 +1,20 @@
 import { ArrowRight, Bike, Building2, Clock, Flame, MapPin, ShieldCheck, Sparkles, Star, Utensils } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { RestaurantCard } from "@/components/customer/restaurant-card";
 import { SiteHeader } from "@/components/layout/site-header";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { categories, menuItems, restaurants } from "@/lib/mock-data";
+import { menuItems, restaurants } from "@/lib/mock-data";
 import { formatPrice } from "@/lib/pricing/delivery";
 import { site } from "@/lib/site";
 
 export default function HomePage() {
   const steps = [
-    { icon: Utensils, title: "Choisis ton mood", text: "Pizza, grillades, burger ou plat béninois : filtre vite et commande." },
-    { icon: Sparkles, title: "Valide en 2 taps", text: "Panier clair, frais visibles, paiement cash actif pour le MVP." },
-    { icon: Bike, title: "Chill, on livre", text: "Suis la commande jusqu’à ta porte avec une timeline simple." }
+    { icon: Utensils, title: "Choisissez votre envie", text: "Pizza, grillades, burger ou plat béninois : filtrez et commandez." },
+    { icon: Sparkles, title: "Validez en 2 clics", text: "Panier clair, frais visibles, paiement sécurisé." },
+    { icon: Bike, title: "On s'occupe de la livraison", text: "Suivez votre commande jusqu'à votre porte avec une timeline simple." }
   ];
 
   return (
@@ -44,8 +45,8 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="absolute bottom-2 left-0 right-10 rounded-[2rem] bg-white p-5 text-dalle-charcoal shadow-2xl">
-                <p className="text-sm font-black text-dalle-orange">Commande DU-1002</p>
-                <h3 className="mt-1 text-2xl font-black">Ton repas arrive 🔥</h3>
+                <p className="text-sm font-black text-dalle-orange">Commande en cours</p>
+                <h3 className="mt-1 text-2xl font-black">Votre repas arrive 🔥</h3>
                 <div className="mt-4 h-3 rounded-full bg-neutral-100"><div className="h-3 w-3/4 rounded-full bg-dalle-orange" /></div>
               </div>
             </div>
@@ -67,7 +68,7 @@ export default function HomePage() {
         </section>
 
         <section className="mx-auto grid max-w-7xl gap-5 px-4 py-14 md:grid-cols-3">
-          {[{ icon: Clock, title: "Rapide", text: "Des parcours courts, pensés pour le mobile." }, { icon: ShieldCheck, title: "Pro", text: "Statuts, paiements et rôles prêts à évoluer." }, { icon: MapPin, title: "Local", text: "Zones et frais de livraison simples au départ." }].map((item) => <Card key={item.title} className="p-6"><item.icon className="text-dalle-orange" /><h3 className="mt-4 text-xl font-black">{item.title}</h3><p className="mt-2 text-neutral-500">{item.text}</p></Card>)}
+          {[{ icon: Clock, title: "Rapide", text: "Des parcours courts, pensés pour le mobile." }, { icon: ShieldCheck, title: "Pro", text: "Statuts, paiements et rôles gérés professionnellement." }, { icon: MapPin, title: "Local", text: "Zones et frais de livraison adaptés à votre localisation." }].map((item) => <Card key={item.title} className="p-6"><item.icon className="text-dalle-orange" /><h3 className="mt-4 text-xl font-black">{item.title}</h3><p className="mt-2 text-neutral-500">{item.text}</p></Card>)}
         </section>
 
         <section className="mx-auto grid max-w-7xl gap-5 px-4 py-10 md:grid-cols-2">
@@ -75,7 +76,36 @@ export default function HomePage() {
           <Card className="p-8"><Bike className="text-dalle-orange" /><h2 className="mt-4 text-3xl font-black">Livreurs DalleUp</h2><p className="mt-3 text-neutral-500">Livraisons assignées, statuts clairs, historique et gains dans un espace dédié.</p><ButtonLink href="/register?role=DELIVERY_DRIVER" className="mt-6" variant="dark">Devenir livreur</ButtonLink></Card>
         </section>
 
-        <footer className="mt-10 bg-dalle-charcoal px-4 py-10 text-white"><div className="mx-auto flex max-w-7xl flex-col justify-between gap-4 md:flex-row"><div><Image src="/brand/dalleup-logo-slogan.svg" alt={`${site.name} - ${site.slogan}`} width={210} height={118} className="h-auto w-48 rounded-2xl bg-white p-2" /><p className="mt-3 text-white/60">Commande. Chill. On livre.</p></div><div className="flex flex-wrap gap-2">{categories.map((category) => <Badge key={category} variant="dark" className="bg-white/10 text-white">{category}</Badge>)}</div></div></footer>
+        <footer className="mt-10 bg-dalle-charcoal px-4 py-10 text-white">
+          <div className="mx-auto max-w-7xl">
+            <div className="grid gap-8 md:grid-cols-3">
+              <div>
+                <Image src="/brand/dalleup-logo-slogan.svg" alt={`${site.name} - ${site.slogan}`} width={210} height={118} className="h-auto w-48 rounded-2xl bg-white p-2" />
+                <p className="mt-3 text-white/60">Commandez vos repas préférés au Bénin. Livraison rapide et suivie.</p>
+              </div>
+              <div>
+                <h3 className="font-black">Liens utiles</h3>
+                <div className="mt-3 grid gap-2 text-sm text-white/70">
+                  <Link href="/restaurants" className="hover:text-dalle-orange">Restaurants</Link>
+                  <Link href="/about" className="hover:text-dalle-orange">À propos</Link>
+                  <Link href="/contact" className="hover:text-dalle-orange">Contact</Link>
+                  <Link href="/faq" className="hover:text-dalle-orange">FAQ</Link>
+                </div>
+              </div>
+              <div>
+                <h3 className="font-black">Professionnels</h3>
+                <div className="mt-3 grid gap-2 text-sm text-white/70">
+                  <Link href="/register?role=RESTAURANT" className="hover:text-dalle-orange">Devenir restaurant partenaire</Link>
+                  <Link href="/register?role=DELIVERY_DRIVER" className="hover:text-dalle-orange">Devenir livreur</Link>
+                  <Link href="/partners" className="hover:text-dalle-orange">Nos partenaires</Link>
+                </div>
+              </div>
+            </div>
+            <div className="mt-8 border-t border-white/10 pt-6 text-center text-sm text-white/40">
+              &copy; {new Date().getFullYear()} {site.name} — Tous droits réservés.
+            </div>
+          </div>
+        </footer>
       </main>
     </>
   );

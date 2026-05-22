@@ -5,6 +5,8 @@ import { prisma } from "@/lib/db/prisma";
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const allowedPublicRoles = ["CLIENT", "RESTAURANT", "DELIVERY_DRIVER"] as const;
 
+export const runtime = "nodejs";
+
 function getPrismaCode(error: unknown) {
   return typeof error === "object" && error && "code" in error ? String(error.code) : null;
 }
@@ -56,6 +58,6 @@ export async function POST(request: Request) {
     const detail = getSafeErrorMessage(error);
     console.warn("[DalleUp register] failed", { code, name, detail });
     if (code === "P2002") return NextResponse.json({ message: "Cet email est déjà utilisé." }, { status: 409 });
-    return NextResponse.json({ message: "Impossible de créer le compte pour le moment.", debugCode: code, debugName: name, debugDetail: detail }, { status: 500 });
+    return NextResponse.json({ message: "Impossible de créer le compte pour le moment. Réessayez plus tard." }, { status: 500 });
   }
 }

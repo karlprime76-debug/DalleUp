@@ -12,9 +12,9 @@ export function CartPageClient() {
   return (
     <main className="px-4 py-6">
       <div className="mx-auto max-w-3xl">
-        <p className="font-black text-dalle-orange">Ton panier</p>
+        <p className="font-black text-dalle-orange">Votre panier</p>
         <h1 className="text-3xl font-black text-dalle-charcoal">Prêt à commander ?</h1>
-        {items.length === 0 ? <div className="mt-6"><EmptyState title="Panier vide" description="Ajoute un plat qui te fait envie et reviens ici pour valider." actionHref="/app/restaurants" actionLabel="Voir les restaurants" /></div> : (
+        {items.length === 0 ? <div className="mt-6"><EmptyState title="Panier vide" description="Ajoutez un plat qui vous fait envie et revenez ici pour valider." actionHref="/app/restaurants" actionLabel="Voir les restaurants" /></div> : (
           <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_320px]">
             <Card className="p-4">
               <div className="mb-4 flex items-center justify-between"><p className="text-sm font-bold text-neutral-500">{items[0]?.restaurantName}</p><Button type="button" variant="outline" size="sm" onClick={clearCart}>Vider</Button></div>
