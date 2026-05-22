@@ -27,10 +27,12 @@ export function CheckoutPageClient() {
   const [deliveryInstructions, setDeliveryInstructions] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<CheckoutMethod>("CASH_ON_DELIVERY");
   const [selectedPlaceLabel, setSelectedPlaceLabel] = useState("");
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
 
   const computedDeliveryFee = useMemo(() => getDeliveryFeeEstimate({ zone: deliveryZone }), [deliveryZone]);
   const computedTotal = useMemo(() => subtotal + (computedDeliveryFee ?? 0), [subtotal, computedDeliveryFee]);
-  const canOrder = computedDeliveryFee !== null && deliveryAddress.trim().length >= 5 && deliveryPhone.trim().length >= 6 && deliveryZone.trim().length > 0;
+  const hasAlcohol = items.some((item) => item.isAlcohol);
+  const canOrder = computedDeliveryFee !== null && deliveryAddress.trim().length >= 5 && deliveryPhone.trim().length >= 6 && deliveryZone.trim().length > 0 && (!hasAlcohol || ageConfirmed);
 
   if (items.length === 0) return <main className="px-4 py-6"><div className="mx-auto max-w-3xl"><EmptyState title="Aucun article à payer" description="Votre panier est vide. Ajoutez un plat avant de passer au paiement." actionHref="/app/restaurants" actionLabel="Voir les restaurants" /></div></main>;
 
@@ -49,6 +51,10 @@ export function CheckoutPageClient() {
     }
     if (computedDeliveryFee === null) {
       setMessage("Frais de livraison non disponibles pour ce lieu.");
+      return;
+    }
+    if (hasAlcohol && !ageConfirmed) {
+      setMessage("Confirmez avoir l’âge légal requis avant de valider cette commande.");
       return;
     }
     setLoading(true);
@@ -127,12 +133,13 @@ export function CheckoutPageClient() {
               <textarea value={deliveryInstructions} onChange={(event) => setDeliveryInstructions(event.target.value)} className="min-h-24 w-full rounded-3xl border border-black/5 bg-white px-5 py-4 text-sm font-semibold outline-none shadow-sm transition placeholder:text-neutral-400 focus:border-dalle-orange focus:ring-4 focus:ring-dalle-orange/10" placeholder="Instructions optionnelles : étage, portail, repère..." />
             </div></div></div></Card>
             <Card className="p-5"><h2 className="font-black">Moyen de paiement</h2><div className="mt-4 grid gap-3"><label className={paymentMethod === "CASH_ON_DELIVERY" ? "flex items-center justify-between rounded-3xl border-2 border-dalle-orange bg-orange-50 p-4" : "flex items-center justify-between rounded-3xl bg-neutral-50 p-4"}><span className="flex items-center gap-3 font-black"><Banknote size={20} /> Paiement à la réception via Mobile Money</span><input type="radio" name="paymentMethod" checked={paymentMethod === "CASH_ON_DELIVERY"} onChange={() => setPaymentMethod("CASH_ON_DELIVERY")} /></label><label className={paymentMethod === "PAYDUNYA" ? "flex items-center justify-between rounded-3xl border-2 border-dalle-orange bg-orange-50 p-4" : "flex items-center justify-between rounded-3xl bg-neutral-50 p-4"}><span className="flex items-center gap-3 font-black"><CreditCard size={20} /> Payer avec PayDunya</span><input type="radio" name="paymentMethod" checked={paymentMethod === "PAYDUNYA"} onChange={() => setPaymentMethod("PAYDUNYA")} /></label><label className="flex items-center justify-between rounded-3xl bg-neutral-50 p-4 text-neutral-400"><span className="flex items-center gap-3 font-black"><Smartphone size={20} /> Mobile Money direct</span><Badge variant="neutral">Bientôt</Badge></label></div></Card>
+            {hasAlcohol ? <Card className="p-5"><h2 className="font-black">Produit réservé aux adultes</h2><p className="mt-2 text-sm text-neutral-600">Cette commande contient un produit réservé aux adultes. Une vérification peut être demandée à la livraison.</p><label className="mt-4 flex items-start gap-3 rounded-3xl bg-orange-50 p-4 text-sm font-bold text-dalle-charcoal"><input type="checkbox" checked={ageConfirmed} onChange={(event) => setAgeConfirmed(event.target.checked)} className="mt-1" />Je confirme avoir l’âge légal requis.</label><p className="mt-2 text-xs font-bold text-dalle-orange">Vérification à la livraison requise.</p></Card> : null}
           </div>
           <Card className="h-fit p-5">
             <h2 className="text-xl font-black">Résumé commande</h2>
             <div className="mt-4 grid gap-3 text-sm">
-              {items.map((item) => <div key={item.id} className="flex justify-between"><span>{item.quantity}× {item.name}</span><span>{formatPrice(item.price * item.quantity)}</span></div>)}
-              <div className="flex justify-between border-t pt-3"><span>Sous-total</span><span>{formatPrice(subtotal)}</span></div>
+              {items.map((item) => <div key={item.id} className="flex justify-between gap-3"><span>{item.quantity}× {item.name}{item.category ? <span className="ml-1 text-neutral-400">· {item.category}</span> : null}{item.isAlcohol ? <span className="ml-1 font-black text-dalle-orange">18+</span> : null}</span><span>{formatPrice(item.price * item.quantity)}</span></div>)}
+              <div className="flex justify-between border-t pt-3"><span>Total articles</span><span>{formatPrice(subtotal)}</span></div>
               <div className="flex justify-between">
                 <span>Livraison</span>
                 <span className={computedDeliveryFee === null ? "text-red-600 font-bold" : ""}>{computedDeliveryFee !== null ? formatPrice(computedDeliveryFee) : "À confirmer"}</span>

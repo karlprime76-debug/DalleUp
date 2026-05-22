@@ -1,4 +1,5 @@
 import type { MenuItem, Restaurant, RestaurantCategory } from "@prisma/client";
+import { getProductTypeFromCategory, isAlcoholCategory } from "@/lib/catalog/product-types";
 
 export type AppRestaurant = {
   id: string;
@@ -17,6 +18,8 @@ export type AppMenuItem = {
   restaurantId: string;
   restaurantName?: string;
   category: string;
+  productType?: string;
+  isAlcohol?: boolean;
   name: string;
   description: string;
   price: number;
@@ -50,6 +53,8 @@ export function mapMenuItem(item: MenuItemWithRestaurant): AppMenuItem {
     restaurantId: item.restaurant?.slug ?? item.restaurantId,
     restaurantName: item.restaurant?.name,
     category: item.category?.name ?? "Menu",
+    productType: getProductTypeFromCategory(item.category?.name),
+    isAlcohol: isAlcoholCategory(item.category?.name),
     name: item.name,
     description: item.description,
     price: item.price,

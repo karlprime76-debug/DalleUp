@@ -9,6 +9,9 @@ export type CartItem = {
   name: string;
   description: string;
   image: string;
+  category?: string;
+  productType?: string;
+  isAlcohol?: boolean;
   price: number;
   quantity: number;
 };

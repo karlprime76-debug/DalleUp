@@ -1,6 +1,6 @@
 "use client";
 
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { Minus, Plus, ShieldAlert, Trash2 } from "lucide-react";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -9,6 +9,7 @@ import { formatPrice } from "@/lib/pricing/delivery";
 
 export function CartPageClient() {
   const { items, subtotal, deliveryFee, total, incrementItem, decrementItem, removeItem, clearCart } = useCart();
+  const hasAlcohol = items.some((item) => item.isAlcohol);
   return (
     <main className="px-4 py-6">
       <div className="mx-auto max-w-3xl">
@@ -18,9 +19,9 @@ export function CartPageClient() {
           <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_320px]">
             <Card className="p-4">
               <div className="mb-4 flex items-center justify-between"><p className="text-sm font-bold text-neutral-500">{items[0]?.restaurantName}</p><Button type="button" variant="outline" size="sm" onClick={clearCart}>Vider</Button></div>
-              <div className="grid gap-3">{items.map((item) => <div key={item.id} className="flex items-center justify-between gap-4 rounded-3xl bg-neutral-50 p-4"><div><p className="font-black">{item.name}</p><p className="mt-1 text-sm text-neutral-500">{formatPrice(item.price)} · quantité {item.quantity}</p><div className="mt-3 flex items-center gap-2"><button type="button" onClick={() => decrementItem(item.id)} className="grid h-8 w-8 place-items-center rounded-xl bg-white"><Minus size={15} /></button><span className="font-black">{item.quantity}</span><button type="button" onClick={() => incrementItem(item.id)} className="grid h-8 w-8 place-items-center rounded-xl bg-dalle-charcoal text-white"><Plus size={15} /></button></div></div><div className="text-right"><p className="font-black text-dalle-orange">{formatPrice(item.price * item.quantity)}</p><button type="button" onClick={() => removeItem(item.id)} className="mt-3 text-neutral-400"><Trash2 size={18} /></button></div></div>)}</div>
+              <div className="grid gap-3">{items.map((item) => <div key={item.id} className="flex items-center justify-between gap-4 rounded-3xl bg-neutral-50 p-4"><div><div className="flex flex-wrap items-center gap-2"><p className="font-black">{item.name}</p>{item.category ? <span className="rounded-full bg-white px-2 py-1 text-[11px] font-black text-neutral-500">{item.category}</span> : null}{item.isAlcohol ? <span className="inline-flex items-center gap-1 rounded-full bg-dalle-charcoal px-2 py-1 text-[11px] font-black text-white"><ShieldAlert size={12} />18+</span> : null}</div><p className="mt-1 text-sm text-neutral-500">{formatPrice(item.price)} · quantité {item.quantity}</p><div className="mt-3 flex items-center gap-2"><button type="button" onClick={() => decrementItem(item.id)} className="grid h-8 w-8 place-items-center rounded-xl bg-white"><Minus size={15} /></button><span className="font-black">{item.quantity}</span><button type="button" onClick={() => incrementItem(item.id)} className="grid h-8 w-8 place-items-center rounded-xl bg-dalle-charcoal text-white"><Plus size={15} /></button></div></div><div className="text-right"><p className="font-black text-dalle-orange">{formatPrice(item.price * item.quantity)}</p><button type="button" onClick={() => removeItem(item.id)} className="mt-3 text-neutral-400"><Trash2 size={18} /></button></div></div>)}</div>
             </Card>
-            <Card className="h-fit p-5"><h2 className="text-xl font-black">Résumé</h2><div className="mt-4 grid gap-3 text-sm"><div className="flex justify-between"><span>Sous-total</span><span>{formatPrice(subtotal)}</span></div><div className="flex justify-between"><span>Frais livraison</span><span>{formatPrice(deliveryFee)}</span></div><div className="flex justify-between border-t pt-3 text-xl font-black"><span>Total</span><span>{formatPrice(total)}</span></div></div><ButtonLink href="/app/checkout" className="mt-5 w-full">Passer commande</ButtonLink></Card>
+            <Card className="h-fit p-5"><h2 className="text-xl font-black">Résumé</h2><div className="mt-4 grid gap-3 text-sm"><div className="flex justify-between"><span>Articles</span><span>{items.reduce((sum, item) => sum + item.quantity, 0)}</span></div><div className="flex justify-between"><span>Total articles</span><span>{formatPrice(subtotal)}</span></div><div className="flex justify-between"><span>Frais de livraison</span><span>{formatPrice(deliveryFee)}</span></div><div className="flex justify-between border-t pt-3 text-xl font-black"><span>Total à payer</span><span>{formatPrice(total)}</span></div></div>{hasAlcohol ? <div className="mt-4 rounded-2xl bg-orange-50 p-3 text-xs font-bold text-dalle-orange"><p>Produit réservé aux adultes</p><p className="mt-1 text-neutral-600">Vérification à la livraison requise.</p></div> : null}<ButtonLink href="/app/checkout" className="mt-5 w-full">Passer commande</ButtonLink></Card>
           </div>
         )}
       </div>

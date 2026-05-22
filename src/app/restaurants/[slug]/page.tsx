@@ -5,6 +5,7 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { getDisplayCategory, productFilters } from "@/lib/catalog/product-types";
 import { getMenuItemsByRestaurantId, getRestaurantById } from "@/lib/data/restaurants";
 import { formatPrice } from "@/lib/pricing/delivery";
 
@@ -13,8 +14,7 @@ export default async function PublicRestaurantDetailsPage({ params }: { params: 
   const restaurant = await getRestaurantById(slug);
   if (!restaurant) notFound();
   const items = (await getMenuItemsByRestaurantId(slug)).map((item) => ({ ...item, restaurantId: restaurant.id, restaurantName: restaurant.name }));
-  const activeItems = items.filter((item) => item.active !== false);
-  const categories = Array.from(new Set(activeItems.map((item) => item.category)));
+  const categories = Array.from(new Set(items.map((item) => getDisplayCategory(item.category))));
 
   return (
     <>
@@ -41,9 +41,10 @@ export default async function PublicRestaurantDetailsPage({ params }: { params: 
             </div>
           </Card>
           <section className="mt-8">
-            <div className="flex flex-col justify-between gap-3 md:flex-row md:items-end"><div><p className="font-black text-dalle-orange">Menu</p><h2 className="text-3xl font-black text-dalle-charcoal">Plats disponibles</h2></div><div className="flex gap-2 overflow-x-auto pb-2">{categories.map((category) => <Badge key={category} variant="soft" className="shrink-0">{category}</Badge>)}</div></div>
-            <div className="mt-5 grid gap-4 md:grid-cols-2">{activeItems.map((item, index) => <MenuItemCard key={item.id} item={item} popular={index < 2} restaurantName={restaurant.name} />)}</div>
-            {activeItems.length === 0 ? <Card className="mt-5 p-6 text-center font-bold text-neutral-500">Aucun plat disponible pour le moment.</Card> : null}
+            <div className="flex flex-col justify-between gap-3 md:flex-row md:items-end"><div><p className="font-black text-dalle-orange">Produits du restaurant</p><h2 className="text-3xl font-black text-dalle-charcoal">Catalogue disponible</h2></div><div className="flex gap-2 overflow-x-auto pb-2">{productFilters.map((filter, index) => <Badge key={filter} variant={index === 0 ? "dark" : "soft"} className="shrink-0">{filter}</Badge>)}</div></div>
+            <div className="mt-3 flex gap-2 overflow-x-auto pb-2">{categories.map((category) => <Badge key={category} variant="neutral" className="shrink-0">{category}</Badge>)}</div>
+            <div className="mt-5 grid gap-4 md:grid-cols-2">{items.map((item, index) => <MenuItemCard key={item.id} item={item} popular={index < 2} restaurantName={restaurant.name} />)}</div>
+            {items.length === 0 ? <Card className="mt-5 p-6 text-center font-bold text-neutral-500">Aucun produit disponible pour le moment.</Card> : null}
           </section>
         </div>
       </main>
