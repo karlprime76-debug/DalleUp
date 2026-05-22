@@ -13,6 +13,14 @@ function getErrorName(error: unknown) {
   return error instanceof Error ? error.name : typeof error;
 }
 
+function getSafeErrorMessage(error: unknown) {
+  if (!(error instanceof Error)) return null;
+  return error.message
+    .split("\n")
+    .map((line) => line.replace(/postgresql:\/\/\S+/gi, "[redacted-url]").replace(/postgres:\/\/\S+/gi, "[redacted-url]").trim())
+    .find((line) => line && !line.startsWith("Invalid `"));
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -45,8 +53,9 @@ export async function POST(request: Request) {
   } catch (error) {
     const code = getPrismaCode(error);
     const name = getErrorName(error);
-    console.warn("[DalleUp register] failed", { code, name });
+    const detail = getSafeErrorMessage(error);
+    console.warn("[DalleUp register] failed", { code, name, detail });
     if (code === "P2002") return NextResponse.json({ message: "Cet email est déjà utilisé." }, { status: 409 });
-    return NextResponse.json({ message: "Impossible de créer le compte pour le moment.", debugCode: code, debugName: name }, { status: 500 });
+    return NextResponse.json({ message: "Impossible de créer le compte pour le moment.", debugCode: code, debugName: name, debugDetail: detail }, { status: 500 });
   }
 }
