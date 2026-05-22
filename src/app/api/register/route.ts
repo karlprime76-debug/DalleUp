@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db/prisma";
+import { sendEmail } from "@/lib/email/send-email";
+import { welcomeClient, welcomeRestaurant, welcomeDriver } from "@/lib/email/templates";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const allowedPublicRoles = ["CLIENT", "RESTAURANT", "DELIVERY_DRIVER"] as const;
+
+function getPrismaCode(error: unknown) {
+  return typeof error === "object" && error && "code" in error ? String(error.code) : null;
+}
 
 export async function POST(request: Request) {
   try {
@@ -15,6 +21,8 @@ export async function POST(request: Request) {
     const confirmPassword = String(body.confirmPassword ?? "");
     const requestedRole = String(body.role ?? "CLIENT");
 
+    console.info("[DalleUp register] received", { email, role: requestedRole });
+
     if (!name || !email || !password || !confirmPassword) return NextResponse.json({ message: "Tous les champs obligatoires doivent être remplis." }, { status: 400 });
     if (name.length < 2) return NextResponse.json({ message: "Le nom doit contenir au moins 2 caractères." }, { status: 400 });
     if (!emailRegex.test(email)) return NextResponse.json({ message: "Adresse email invalide." }, { status: 400 });
@@ -22,13 +30,27 @@ export async function POST(request: Request) {
     if (password !== confirmPassword) return NextResponse.json({ message: "Les mots de passe ne correspondent pas." }, { status: 400 });
     if (!allowedPublicRoles.includes(requestedRole as typeof allowedPublicRoles[number])) return NextResponse.json({ message: "Type de compte invalide." }, { status: 400 });
 
+    console.info("[DalleUp register] validation ok", { email, role: requestedRole });
+
     const existing = await prisma.user.findUnique({ where: { email } });
+    console.info("[DalleUp register] existing user", { email, exists: Boolean(existing) });
     if (existing) return NextResponse.json({ message: "Cet email est déjà utilisé." }, { status: 409 });
 
     const passwordHash = await bcrypt.hash(password, 10);
-    await prisma.user.create({ data: { name, email, phone: phone || null, passwordHash, role: requestedRole as typeof allowedPublicRoles[number] } });
-    return NextResponse.json({ message: "Compte créé avec succès." }, { status: 201 });
-  } catch {
+    const user = await prisma.user.create({ data: { name, email, phone: phone || null, passwordHash, role: requestedRole as typeof allowedPublicRoles[number] }, select: { id: true, name: true, email: true, role: true } });
+
+    try {
+      const template = requestedRole === "RESTAURANT" ? welcomeRestaurant(name) : requestedRole === "DELIVERY_DRIVER" ? welcomeDriver(name) : welcomeClient(name);
+      await sendEmail({ to: email, subject: template.subject, html: template.html, text: template.text });
+    } catch {
+      /* L'email ne bloque pas l'inscription */
+    }
+
+    return NextResponse.json({ success: true, message: "Compte créé avec succès.", role: user.role, user }, { status: 201 });
+  } catch (error) {
+    const code = getPrismaCode(error);
+    console.warn("[DalleUp register] failed", { code });
+    if (code === "P2002") return NextResponse.json({ message: "Cet email est déjà utilisé." }, { status: 409 });
     return NextResponse.json({ message: "Impossible de créer le compte pour le moment." }, { status: 500 });
   }
 }
