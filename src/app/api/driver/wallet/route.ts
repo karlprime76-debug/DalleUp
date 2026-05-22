@@ -1,17 +1,14 @@
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "@/lib/auth/config";
+import { requireApprovedDriverApi } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id || session.user.role !== "DELIVERY_DRIVER") {
-      return NextResponse.json({ message: "Accès refusé." }, { status: 403 });
-    }
+    const result = await requireApprovedDriverApi();
+    if ("response" in result) return result.response;
 
     const wallet = await prisma.wallet.findUnique({
-      where: { userId: session.user.id },
+      where: { userId: result.session.user.id },
       include: {
         entries: { orderBy: { createdAt: "desc" }, take: 50 },
       },

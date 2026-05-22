@@ -1,6 +1,5 @@
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "@/lib/auth/config";
+import { requireRestaurantApi } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 
 async function getOwnedMenuItem(ownerId: string, id: string) {
@@ -9,10 +8,10 @@ async function getOwnedMenuItem(ownerId: string, id: string) {
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id || session.user.role !== "RESTAURANT") return NextResponse.json({ message: "Accès restaurant requis." }, { status: 403 });
+    const result = await requireRestaurantApi();
+    if ("response" in result) return result.response;
     const { id } = await params;
-    const existing = await getOwnedMenuItem(session.user.id, id);
+    const existing = await getOwnedMenuItem(result.session.user.id, id);
     if (!existing) return NextResponse.json({ message: "Produit introuvable." }, { status: 404 });
     const body = await request.json();
     const data = {

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
-const statuses = ["AVAILABLE", "OFFLINE", "ON_DELIVERY", "SUSPENDED"];
+const statuses = ["PENDING", "AVAILABLE", "OFFLINE", "ON_DELIVERY", "SUSPENDED"];
 
 export function DriverStatusActions({ driverId }: { driverId?: string }) {
   const router = useRouter();

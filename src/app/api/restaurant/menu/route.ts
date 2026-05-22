@@ -1,6 +1,5 @@
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "@/lib/auth/config";
+import { requireRestaurantApi } from "@/lib/auth/guards";
 import { getRestaurantMenuForOwner } from "@/lib/data/restaurant-menu";
 import { prisma } from "@/lib/db/prisma";
 
@@ -16,18 +15,17 @@ function isValidImageUrl(value: string) {
 }
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (session?.user?.role !== "RESTAURANT") return NextResponse.json({ message: "Accès restaurant requis." }, { status: 403 });
-  const data = await getRestaurantMenuForOwner(session.user.id);
+  const result = await requireRestaurantApi();
+  if ("response" in result) return result.response;
+  const data = await getRestaurantMenuForOwner(result.session.user.id);
   return NextResponse.json(data);
 }
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id || session.user.role !== "RESTAURANT") return NextResponse.json({ message: "Accès restaurant requis." }, { status: 403 });
-    const restaurant = await prisma.restaurant.findFirst({ where: { ownerId: session.user.id } });
-    if (!restaurant) return NextResponse.json({ message: "Restaurant Prisma introuvable." }, { status: 404 });
+    const result = await requireRestaurantApi();
+    if ("response" in result) return result.response;
+    const { restaurant } = result;
     const body = await request.json();
     const name = String(body.name ?? "").trim();
     const description = String(body.description ?? "").trim();

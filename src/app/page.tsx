@@ -32,8 +32,13 @@ export default function HomePage() {
               <p className="mt-4 text-3xl font-black text-dalle-orange md:text-5xl">Commande. Chill. On livre.</p>
               <p className="mt-6 max-w-xl text-lg text-white/70">{site.name} transforme la commande repas en vraie expérience mobile : rapide, fun, claire et locale.</p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <ButtonLink href="/app" size="lg">Commander maintenant <ArrowRight size={18} /></ButtonLink>
-                <ButtonLink href="/register?role=RESTAURANT" variant="ghost" size="lg">Devenir partenaire</ButtonLink>
+                <ButtonLink href="/app" size="lg">Commander en tant que client <ArrowRight size={18} /></ButtonLink>
+                <ButtonLink href="/login" variant="ghost" size="lg">Se connecter</ButtonLink>
+              </div>
+              <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+                <ButtonLink href="/register" variant="secondary" size="lg">Créer un compte client</ButtonLink>
+                <ButtonLink href="/register?role=RESTAURANT" variant="ghost" size="lg">Devenir restaurant partenaire</ButtonLink>
+                <ButtonLink href="/register?role=DELIVERY_DRIVER" variant="ghost" size="lg">Devenir livreur DalleUp</ButtonLink>
               </div>
             </div>
             <div className="relative min-h-[470px]">

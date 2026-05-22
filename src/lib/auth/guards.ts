@@ -29,5 +29,34 @@ export async function requireRestaurantApi() {
   if (session.user.role !== "RESTAURANT") return { response: NextResponse.json({ message: "Accès restaurant requis." }, { status: 403 }) };
   const restaurant = await prisma.restaurant.findFirst({ where: { ownerId: session.user.id } });
   if (!restaurant) return { response: NextResponse.json({ message: "Restaurant Prisma introuvable." }, { status: 404 }) };
+  if (restaurant.status === "PENDING") return { response: NextResponse.json({ message: "Votre compte restaurant est en attente de validation." }, { status: 403 }) };
+  if (restaurant.status === "SUSPENDED") return { response: NextResponse.json({ message: "Compte suspendu. Contactez le support." }, { status: 403 }) };
   return { session, restaurant };
+}
+
+export async function requireApprovedRestaurant() {
+  const session = await requireRole(["RESTAURANT"]);
+  const restaurant = await prisma.restaurant.findFirst({ where: { ownerId: session.user.id } });
+  if (!restaurant) redirect("/restaurant/onboarding");
+  if (restaurant.status === "PENDING") redirect("/restaurant/pending");
+  if (restaurant.status === "SUSPENDED") redirect("/restaurant/suspended");
+  return { session, restaurant };
+}
+
+export async function requireApprovedDriver() {
+  const session = await requireRole(["DELIVERY_DRIVER"]);
+  const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+  if (!user?.driverStatus) redirect("/driver/pending");
+  if (user.driverStatus === "SUSPENDED") redirect("/driver/suspended");
+  return { session, user };
+}
+
+export async function requireApprovedDriverApi() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) return { response: NextResponse.json({ message: "Authentification requise." }, { status: 401 }) };
+  if (session.user.role !== "DELIVERY_DRIVER") return { response: NextResponse.json({ message: "Accès livreur requis." }, { status: 403 }) };
+  const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+  if (!user?.driverStatus) return { response: NextResponse.json({ message: "Votre profil livreur est en attente de validation." }, { status: 403 }) };
+  if (user.driverStatus === "SUSPENDED") return { response: NextResponse.json({ message: "Compte suspendu. Contactez le support." }, { status: 403 }) };
+  return { session, user };
 }

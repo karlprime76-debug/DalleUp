@@ -11,13 +11,15 @@ type MenuItemCardProps = {
   item: { id?: string; restaurantId?: string; restaurantName?: string; category?: string; productType?: string; isAlcohol?: boolean; name: string; description: string; price: number; image: string; active: boolean };
   popular?: boolean;
   restaurantName?: string;
+  restaurantOpen?: boolean;
 };
 
-export function MenuItemCard({ item, popular, restaurantName }: MenuItemCardProps) {
+export function MenuItemCard({ item, popular, restaurantName, restaurantOpen = true }: MenuItemCardProps) {
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
 
   function handleAdd() {
+    if (!restaurantOpen) return;
     addItem({
       id: item.id ?? item.name,
       restaurantId: item.restaurantId ?? "unknown",
@@ -44,14 +46,14 @@ export function MenuItemCard({ item, popular, restaurantName }: MenuItemCardProp
           {popular ? <Badge variant="soft"><Flame size={13} />Tendance</Badge> : null}
           {item.category ? <Badge variant="neutral">{item.category}</Badge> : null}
           {item.isAlcohol ? <Badge variant="dark"><ShieldAlert size={13} />18+</Badge> : null}
-          {!item.active ? <Badge variant="neutral">Indisponible pour le moment</Badge> : null}
+          {!restaurantOpen ? <Badge variant="neutral">Restaurant fermé</Badge> : !item.active ? <Badge variant="neutral">Indisponible pour le moment</Badge> : null}
         </div>
         <h3 className="font-black text-dalle-charcoal">{item.name}</h3>
         <p className="mt-1 line-clamp-2 text-sm text-neutral-500">{item.description}</p>
         <div className="mt-3 flex items-center justify-between">
           <span className="font-black text-dalle-orange">{formatPrice(item.price)}</span>
-          <button type="button" onClick={handleAdd} disabled={!item.active || item.isAlcohol} className="inline-flex h-10 min-w-10 items-center justify-center gap-1 rounded-2xl bg-dalle-charcoal px-3 text-sm font-black text-white transition disabled:bg-neutral-200 disabled:text-neutral-400">
-            {added ? <Check size={18} /> : <Plus size={18} />}{item.isAlcohol ? "18+" : !item.active ? "Indisponible" : added ? "Ajouté" : "Ajouter"}
+          <button type="button" onClick={handleAdd} disabled={!restaurantOpen || !item.active || item.isAlcohol} className="inline-flex h-10 min-w-10 items-center justify-center gap-1 rounded-2xl bg-dalle-charcoal px-3 text-sm font-black text-white transition disabled:bg-neutral-200 disabled:text-neutral-400">
+            {added ? <Check size={18} /> : <Plus size={18} />}{!restaurantOpen ? "Fermé" : item.isAlcohol ? "18+" : !item.active ? "Indisponible" : added ? "Ajouté" : "Ajouter"}
           </button>
         </div>
       </div>

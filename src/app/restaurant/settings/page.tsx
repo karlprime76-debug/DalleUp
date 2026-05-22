@@ -1,17 +1,16 @@
-import { getServerSession } from "next-auth";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { RestaurantSettingsForm } from "@/components/restaurant/restaurant-settings-form";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { authOptions } from "@/lib/auth/config";
+import { requireApprovedRestaurant } from "@/lib/auth/guards";
 import { getRestaurantSettings } from "@/lib/data/restaurant-settings";
 import { formatPrice } from "@/lib/pricing/delivery";
 
 const nav = [{ href: "/restaurant/dashboard", label: "Accueil" }, { href: "/restaurant/orders", label: "Commandes" }, { href: "/restaurant/menu", label: "Menu" }, { href: "/restaurant/billing", label: "Facturation" }, { href: "/restaurant/settings", label: "Paramètres" }];
 
 export default async function RestaurantSettingsPage() {
-  const session = await getServerSession(authOptions);
-  const settings = await getRestaurantSettings(session?.user?.id);
+  const { session } = await requireApprovedRestaurant();
+  const settings = await getRestaurantSettings(session.user.id);
   return <DashboardShell title="Paramètres Restaurant" nav={nav}>{settings ? <div className="grid gap-5 xl:grid-cols-[1fr_340px]"><Card className="p-5"><h2 className="text-xl font-black">Profil restaurant</h2><p className="mb-5 mt-2 text-sm text-neutral-500">{settings.isMock ? "Fallback mock en lecture seule." : "Modifier les informations publiques de ton restaurant."}</p><RestaurantSettingsForm settings={settings} /></Card><Card className="h-fit p-5"><h2 className="text-xl font-black">Résumé</h2><div className="mt-4 grid gap-3 text-sm"><div className="flex justify-between"><span>Statut</span><Badge variant={settings.status === "APPROVED" ? "lime" : "neutral"}>{settings.status}</Badge></div><div className="flex justify-between"><span>Slug</span><b>{settings.slug}</b></div><div className="flex justify-between"><span>Livraison</span><b>{formatPrice(settings.deliveryFee)}</b></div><div className="flex justify-between"><span>Délai</span><b>{settings.minDelayMin}-{settings.maxDelayMin} min</b></div></div></Card></div> : <Card className="p-5"><h2 className="text-xl font-black">Restaurant introuvable</h2></Card>}</DashboardShell>;
 }
 

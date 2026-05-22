@@ -28,6 +28,7 @@ export function CheckoutPageClient() {
   const [paymentMethod, setPaymentMethod] = useState<CheckoutMethod>("CASH_ON_DELIVERY");
   const [selectedPlaceLabel, setSelectedPlaceLabel] = useState("");
   const [ageConfirmed, setAgeConfirmed] = useState(false);
+  const [promoCode, setPromoCode] = useState("");
 
   const computedDeliveryFee = useMemo(() => getDeliveryFeeEstimate({ zone: deliveryZone }), [deliveryZone]);
   const computedTotal = useMemo(() => subtotal + (computedDeliveryFee ?? 0), [subtotal, computedDeliveryFee]);
@@ -66,7 +67,7 @@ export function CheckoutPageClient() {
         router.push("/login?callbackUrl=/app/checkout");
         return;
       }
-      const orderResponse = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items, paymentMethod: paymentMethod === "PAYDUNYA" ? "CARD" : "CASH_ON_DELIVERY", deliveryAddress, deliveryZone, deliveryPhone, deliveryInstructions }) });
+      const orderResponse = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items, paymentMethod: paymentMethod === "PAYDUNYA" ? "CARD" : "CASH_ON_DELIVERY", deliveryAddress, deliveryZone, deliveryPhone, deliveryInstructions, promoCode }) });
       if (!orderResponse.ok) {
         if (orderResponse.status === 401) {
           router.push("/login?callbackUrl=/app/checkout");
@@ -133,6 +134,7 @@ export function CheckoutPageClient() {
               <textarea value={deliveryInstructions} onChange={(event) => setDeliveryInstructions(event.target.value)} className="min-h-24 w-full rounded-3xl border border-black/5 bg-white px-5 py-4 text-sm font-semibold outline-none shadow-sm transition placeholder:text-neutral-400 focus:border-dalle-orange focus:ring-4 focus:ring-dalle-orange/10" placeholder="Instructions optionnelles : étage, portail, repère..." />
             </div></div></div></Card>
             <Card className="p-5"><h2 className="font-black">Moyen de paiement</h2><div className="mt-4 grid gap-3"><label className={paymentMethod === "CASH_ON_DELIVERY" ? "flex items-center justify-between rounded-3xl border-2 border-dalle-orange bg-orange-50 p-4" : "flex items-center justify-between rounded-3xl bg-neutral-50 p-4"}><span className="flex items-center gap-3 font-black"><Banknote size={20} /> Paiement à la réception via Mobile Money</span><input type="radio" name="paymentMethod" checked={paymentMethod === "CASH_ON_DELIVERY"} onChange={() => setPaymentMethod("CASH_ON_DELIVERY")} /></label><label className={paymentMethod === "PAYDUNYA" ? "flex items-center justify-between rounded-3xl border-2 border-dalle-orange bg-orange-50 p-4" : "flex items-center justify-between rounded-3xl bg-neutral-50 p-4"}><span className="flex items-center gap-3 font-black"><CreditCard size={20} /> Payer avec PayDunya</span><input type="radio" name="paymentMethod" checked={paymentMethod === "PAYDUNYA"} onChange={() => setPaymentMethod("PAYDUNYA")} /></label><label className="flex items-center justify-between rounded-3xl bg-neutral-50 p-4 text-neutral-400"><span className="flex items-center gap-3 font-black"><Smartphone size={20} /> Mobile Money direct</span><Badge variant="neutral">Bientôt</Badge></label></div></Card>
+            <Card className="p-5"><h2 className="font-black">Code promo</h2><p className="mt-2 text-sm text-neutral-500">La réduction est vérifiée et appliquée côté serveur.</p><Input value={promoCode} onChange={(event) => setPromoCode(event.target.value.toUpperCase())} placeholder="Ex: DALLEUP10" className="mt-3" /></Card>
             {hasAlcohol ? <Card className="p-5"><h2 className="font-black">Produit réservé aux adultes</h2><p className="mt-2 text-sm text-neutral-600">Cette commande contient un produit réservé aux adultes. Une vérification peut être demandée à la livraison.</p><label className="mt-4 flex items-start gap-3 rounded-3xl bg-orange-50 p-4 text-sm font-bold text-dalle-charcoal"><input type="checkbox" checked={ageConfirmed} onChange={(event) => setAgeConfirmed(event.target.checked)} className="mt-1" />Je confirme avoir l’âge légal requis.</label><p className="mt-2 text-xs font-bold text-dalle-orange">Vérification à la livraison requise.</p></Card> : null}
           </div>
           <Card className="h-fit p-5">

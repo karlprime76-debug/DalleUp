@@ -27,9 +27,10 @@ export default async function PublicRestaurantDetailsPage({ params }: { params: 
             <div className="p-5 md:p-7">
               <div className="flex flex-col justify-between gap-5 md:flex-row md:items-start">
                 <div>
-                  <div className="flex flex-wrap gap-2"><Badge variant="orange">{restaurant.category}</Badge>{restaurant.popular ? <Badge variant="lime">Populaire</Badge> : null}</div>
+                  <div className="flex flex-wrap gap-2"><Badge variant="orange">{restaurant.category}</Badge><Badge variant={restaurant.isOpen ? "lime" : "neutral"}>{restaurant.isOpen ? "Ouvert" : "Fermé"}</Badge>{restaurant.popular ? <Badge variant="lime">Populaire</Badge> : null}</div>
                   <h1 className="mt-3 text-4xl font-black text-dalle-charcoal md:text-5xl">{restaurant.name}</h1>
                   <p className="mt-3 max-w-2xl text-neutral-600">{restaurant.description}</p>
+                  {!restaurant.isOpen ? <p className="mt-3 rounded-3xl bg-neutral-100 px-4 py-3 text-sm font-bold text-neutral-600">Ce restaurant est fermé pour le moment.</p> : null}
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-center md:min-w-80">
                   <div className="rounded-3xl bg-orange-50 p-3"><p className="flex items-center justify-center gap-1 font-black text-dalle-orange"><Star size={15} fill="currentColor" />{restaurant.rating}</p><p className="text-xs text-neutral-500">Note</p></div>
@@ -37,13 +38,13 @@ export default async function PublicRestaurantDetailsPage({ params }: { params: 
                   <div className="rounded-3xl bg-neutral-50 p-3"><p className="font-black">{formatPrice(restaurant.deliveryFee)}</p><p className="text-xs text-neutral-500">Livraison</p></div>
                 </div>
               </div>
-              <ButtonLink href={`/app/restaurants/${restaurant.id}`} className="mt-6"><ShoppingBag size={18} /> Commander</ButtonLink>
+              {restaurant.isOpen ? <ButtonLink href={`/app/restaurants/${restaurant.id}`} className="mt-6"><ShoppingBag size={18} /> Commander</ButtonLink> : null}
             </div>
           </Card>
           <section className="mt-8">
             <div className="flex flex-col justify-between gap-3 md:flex-row md:items-end"><div><p className="font-black text-dalle-orange">Produits du restaurant</p><h2 className="text-3xl font-black text-dalle-charcoal">Catalogue disponible</h2></div><div className="flex gap-2 overflow-x-auto pb-2">{productFilters.map((filter, index) => <Badge key={filter} variant={index === 0 ? "dark" : "soft"} className="shrink-0">{filter}</Badge>)}</div></div>
             <div className="mt-3 flex gap-2 overflow-x-auto pb-2">{categories.map((category) => <Badge key={category} variant="neutral" className="shrink-0">{category}</Badge>)}</div>
-            <div className="mt-5 grid gap-4 md:grid-cols-2">{items.map((item, index) => <MenuItemCard key={item.id} item={item} popular={index < 2} restaurantName={restaurant.name} />)}</div>
+            <div className="mt-5 grid gap-4 md:grid-cols-2">{items.map((item, index) => <MenuItemCard key={item.id} item={item} popular={index < 2} restaurantName={restaurant.name} restaurantOpen={restaurant.isOpen} />)}</div>
             {items.length === 0 ? <Card className="mt-5 p-6 text-center font-bold text-neutral-500">Aucun produit disponible pour le moment.</Card> : null}
           </section>
         </div>

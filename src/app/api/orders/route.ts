@@ -6,6 +6,7 @@ import { sendEmail } from "@/lib/email/send-email";
 import { orderConfirmationClient, newOrderRestaurant } from "@/lib/email/templates";
 import { formatPrice } from "@/lib/pricing/delivery";
 import { getDeliveryFeeEstimate } from "@/lib/billing/delivery-fee";
+import { validatePromoCode } from "@/lib/promotions/promo-codes";
 
 type OrderItemInput = {
   id?: string;
@@ -62,6 +63,7 @@ export async function POST(request: Request) {
 
     const restaurant = await prisma.restaurant.findFirst({ where: { OR: [{ id: restaurantId }, { slug: restaurantId }] } });
     if (!restaurant) return NextResponse.json({ message: "Restaurant indisponible en base." }, { status: 404 });
+    if (restaurant.status !== "APPROVED") return NextResponse.json({ message: "Ce restaurant est fermé pour le moment." }, { status: 403 });
 
     const menuItems = await prisma.menuItem.findMany({ where: { id: { in: normalizedItems.map((item) => item.menuItemId) }, restaurantId: restaurant.id, isActive: true } });
     if (menuItems.length !== items.length) return NextResponse.json({ message: "Certains plats ne sont pas disponibles en base." }, { status: 404 });
@@ -72,11 +74,14 @@ export async function POST(request: Request) {
       const menuItem = menuItems.find((entry) => entry.id === item.menuItemId);
       return sum + (menuItem?.price ?? 0) * item.quantity;
     }, 0);
+    const promoCode = String(body.promoCode ?? "").trim();
+    const promo = await validatePromoCode({ code: promoCode, subtotal });
+    if (promoCode && !promo) return NextResponse.json({ message: "Code promo invalide ou expiré." }, { status: 400 });
     const deliveryFee = getDeliveryFeeEstimate({ zone: deliveryZone });
     if (deliveryFee === null) {
       return NextResponse.json({ message: "Frais de livraison non calculables pour ce quartier." }, { status: 400 });
     }
-    const total = subtotal + deliveryFee;
+    const total = (promo?.discountedSubtotal ?? subtotal) + deliveryFee;
 
     const order = await prisma.order.create({
       data: {
@@ -84,7 +89,7 @@ export async function POST(request: Request) {
         customerId: session.user.id,
         restaurantId: restaurant.id,
         addressId: address?.id,
-        note: deliveryInstructions ? `${deliveryInstructions} · Téléphone: ${deliveryPhone}` : `Téléphone: ${deliveryPhone}`,
+        note: `${deliveryInstructions ? `${deliveryInstructions} · ` : ""}Téléphone: ${deliveryPhone}${promo ? ` · Code promo ${promo.code}: -${formatPrice(promo.discount)}` : ""}`,
         subtotal,
         deliveryFee,
         total,

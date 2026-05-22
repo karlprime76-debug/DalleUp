@@ -114,7 +114,7 @@ export async function getOpsDrivers(): Promise<OpsDriver[]> {
   try {
     const drivers = await prisma.user.findMany({ where: { role: "DELIVERY_DRIVER" }, include: { _count: { select: { deliveries: true } } }, take: 20 });
     if (!drivers.length) return mockDrivers.map((driver) => ({ ...driver, email: "demo@dalleup.test", phone: "—", isMock: true }));
-    return drivers.map((driver) => ({ id: driver.id, dbId: driver.id, name: driver.name, email: driver.email, phone: driver.phone ?? "—", status: driver.driverStatus ?? "OFFLINE", deliveries: driver._count.deliveries, earnings: driver._count.deliveries * 2500 }));
+    return drivers.map((driver) => ({ id: driver.id, dbId: driver.id, name: driver.name, email: driver.email, phone: driver.phone ?? "—", status: driver.driverStatus ?? "PENDING", deliveries: driver._count.deliveries, earnings: driver._count.deliveries * 2500 }));
   } catch (error) {
     warnFallback("getOpsDrivers", error);
     return mockDrivers.map((driver) => ({ ...driver, email: "demo@dalleup.test", phone: "—", isMock: true }));

@@ -5,6 +5,8 @@ export type AppRestaurant = {
   id: string;
   name: string;
   category: string;
+  status: string;
+  isOpen: boolean;
   rating: number;
   delay: string;
   deliveryFee: number;
@@ -38,6 +40,8 @@ export function mapRestaurant(restaurant: RestaurantWithCategory): AppRestaurant
     id: restaurant.slug || restaurant.id,
     name: restaurant.name,
     category: restaurant.category?.name ?? "Restaurant",
+    status: restaurant.status,
+    isOpen: restaurant.status === "APPROVED",
     rating: restaurant.rating,
     delay: `${restaurant.minDelayMin}-${restaurant.maxDelayMin} min`,
     deliveryFee: restaurant.deliveryFee,
