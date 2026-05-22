@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/db/prisma";
-import { menuItems as mockMenuItems, restaurants as mockRestaurants } from "@/lib/mock-data";
 
 export type RestaurantMenuItem = {
   id: string;
@@ -28,8 +27,7 @@ export async function getOwnerRestaurant(ownerId?: string): Promise<OwnerRestaur
   } catch (error) {
     warnFallback("getOwnerRestaurant", error);
   }
-  const restaurant = mockRestaurants[0];
-  return restaurant ? { id: restaurant.id, name: restaurant.name, isMock: true } : null;
+  return null;
 }
 
 export async function getRestaurantMenuForOwner(ownerId?: string): Promise<{ restaurant: OwnerRestaurant | null; items: RestaurantMenuItem[] }> {
@@ -42,8 +40,7 @@ export async function getRestaurantMenuForOwner(ownerId?: string): Promise<{ res
   } catch (error) {
     warnFallback("getRestaurantMenuForOwner", error);
   }
-  const fallbackRestaurant = restaurant ?? { id: mockRestaurants[0]?.id ?? "mock", name: mockRestaurants[0]?.name ?? "Restaurant démo", isMock: true };
-  return { restaurant: fallbackRestaurant, items: mockMenuItems.filter((item) => item.restaurantId === fallbackRestaurant.id).map((item) => ({ id: item.id, restaurantId: item.restaurantId, name: item.name, description: item.description, price: item.price, image: item.image, category: item.category, isActive: item.active, isMock: true })) };
+  return { restaurant, items: [] };
 }
 
 export async function getRestaurantMenuItemForOwner(ownerId: string | undefined, itemId: string): Promise<RestaurantMenuItem | null> {

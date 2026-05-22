@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth/config";
 import { prisma } from "@/lib/db/prisma";
+import { creditOrderDelivery } from "@/lib/billing/ledger";
 
 const allowedStatuses = ["PICKED_UP", "ON_THE_WAY", "DELIVERED", "FAILED"] as const;
 
@@ -26,6 +27,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const updated = await prisma.delivery.update({ where: { id: delivery.id }, data: { status: nextStatus, pickedAt: nextStatus === "PICKED_UP" ? new Date() : delivery.pickedAt, deliveredAt: nextStatus === "DELIVERED" ? new Date() : delivery.deliveredAt }, include: { order: true } });
     await prisma.order.update({ where: { id: delivery.orderId }, data: { status: orderStatusForDelivery(nextStatus) } });
     if (nextStatus === "DELIVERED" || nextStatus === "FAILED") await prisma.user.update({ where: { id: session.user.id }, data: { driverStatus: "AVAILABLE" } });
+    if (nextStatus === "DELIVERED") {
+      try { await creditOrderDelivery(delivery.orderId); }
+      catch (ledgerErr) { if (process.env.NODE_ENV !== "production") console.warn("[DalleUp ledger] credit failed", ledgerErr); }
+    }
     return NextResponse.json({ delivery: updated });
   } catch (error) {
     if (process.env.NODE_ENV !== "production") console.warn("[DalleUp ops fallback] delivery status", error);

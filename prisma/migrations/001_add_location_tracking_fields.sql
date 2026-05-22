@@ -1,0 +1,7 @@
+ALTER TABLE "Restaurant" ADD COLUMN "latitude" DOUBLE PRECISION;
+ALTER TABLE "Restaurant" ADD COLUMN "longitude" DOUBLE PRECISION;
+
+ALTER TABLE "Delivery" ADD COLUMN "currentLatitude" DOUBLE PRECISION;
+ALTER TABLE "Delivery" ADD COLUMN "currentLongitude" DOUBLE PRECISION;
+ALTER TABLE "Delivery" ADD COLUMN "lastLocationAt" TIMESTAMP(3);
+ALTER TABLE "Delivery" ADD COLUMN "trackingEnabled" BOOLEAN NOT NULL DEFAULT false;

@@ -37,10 +37,11 @@ export function LoginForm() {
       <p className="text-sm font-black text-dalle-orange">DalleUp</p>
       <h1 className="mt-2 text-3xl font-black">Connexion</h1>
       {error ? <div className="mt-5 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">{error}</div> : null}
-      <Input name="email" className="mt-6" placeholder="Email" type="email" defaultValue="client@dalleup.test" required />
-      <Input name="password" className="mt-3" placeholder="Mot de passe" type="password" defaultValue="demo1234" required />
+      <Input name="email" className="mt-6" placeholder="Email" type="email" required />
+      <Input name="password" className="mt-3" placeholder="Mot de passe" type="password" required />
       <Button className="mt-5 w-full" type="submit" disabled={loading}>{loading ? "Connexion..." : "Se connecter"}</Button>
-      <p className="mt-4 text-center text-sm text-neutral-500">Pas encore de compte ? <Link href="/register" className="font-black text-dalle-orange">Créer un compte client</Link></p>
+      <p className="mt-4 text-center text-sm text-neutral-500"><Link href="/forgot-password" className="font-black text-dalle-orange">Mot de passe oublié ?</Link></p>
+      <p className="mt-2 text-center text-sm text-neutral-500">Pas encore de compte ? <Link href="/register" className="font-black text-dalle-orange">Créer un compte client</Link></p>
     </form>
   );
 }

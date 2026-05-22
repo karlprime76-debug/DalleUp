@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum UserRole {
@@ -126,6 +127,7 @@ model User {
   sessions      Session[]
   adminAuditLogs AdminAuditLog[]
   billingNotifications BillingNotification[]
+  wallet               Wallet?
 }
 
 model Account {
@@ -184,6 +186,8 @@ model Restaurant {
   minDelayMin Int                @default(20)
   maxDelayMin Int                @default(40)
   isPopular   Boolean            @default(false)
+  latitude    Float?
+  longitude   Float?
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
   owner       User               @relation(fields: [ownerId], references: [id])
@@ -242,7 +246,8 @@ model Order {
   items          OrderItem[]
   delivery       Delivery?
   payment        Payment?
-  review         Review?
+  review           Review?
+  platformRevenue  PlatformRevenue?
 }
 
 model OrderItem {
@@ -257,15 +262,19 @@ model OrderItem {
 }
 
 model Delivery {
-  id         String         @id @default(cuid())
-  orderId    String         @unique
-  driverId   String?
-  status     DeliveryStatus @default(PENDING)
-  distanceKm Float?
-  pickedAt   DateTime?
-  deliveredAt DateTime?
-  order      Order          @relation(fields: [orderId], references: [id])
-  driver     User?          @relation("DriverDeliveries", fields: [driverId], references: [id])
+  id               String         @id @default(cuid())
+  orderId          String         @unique
+  driverId         String?
+  status           DeliveryStatus @default(PENDING)
+  distanceKm       Float?
+  currentLatitude  Float?
+  currentLongitude Float?
+  lastLocationAt   DateTime?
+  trackingEnabled  Boolean        @default(false)
+  pickedAt         DateTime?
+  deliveredAt      DateTime?
+  order            Order          @relation(fields: [orderId], references: [id])
+  driver           User?          @relation("DriverDeliveries", fields: [driverId], references: [id])
 }
 
 model Address {
@@ -409,4 +418,94 @@ model PlatformSetting {
   key       String   @unique
   value     String
   updatedAt DateTime @updatedAt
+}
+
+enum LedgerEntryType {
+  RESTAURANT_PAYOUT
+  DRIVER_PAYOUT
+  PLATFORM_REVENUE
+}
+
+enum LedgerEntryDirection {
+  CREDIT
+  DEBIT
+}
+
+enum LedgerEntryStatus {
+  PENDING
+  SETTLED
+  FAILED
+}
+
+enum PayoutStatus {
+  REQUESTED
+  PROCESSING
+  PAID
+  FAILED
+}
+
+enum SettlementBatchStatus {
+  OPEN
+  CLOSED
+}
+
+model Wallet {
+  id             String        @id @default(cuid())
+  userId         String        @unique
+  balance        Int           @default(0)
+  pendingBalance Int           @default(0)
+  currency       String        @default("XOF")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  user           User          @relation(fields: [userId], references: [id])
+  entries        LedgerEntry[]
+}
+
+model LedgerEntry {
+  id          String              @id @default(cuid())
+  walletId    String
+  orderId     String?
+  type        LedgerEntryType
+  amount      Int
+  direction   LedgerEntryDirection
+  status      LedgerEntryStatus     @default(PENDING)
+  description String?
+  createdAt   DateTime              @default(now())
+  wallet      Wallet                @relation(fields: [walletId], references: [id])
+}
+
+model PlatformRevenue {
+  id                   String   @id @default(cuid())
+  orderId              String   @unique
+  foodSubtotal         Int
+  deliveryFee          Int
+  restaurantCommission Int
+  deliveryCommission   Int
+  restaurantPayout     Int
+  driverPayout         Int
+  totalPlatformRevenue Int
+  createdAt            DateTime @default(now())
+  order                Order    @relation(fields: [orderId], references: [id])
+}
+
+model Payout {
+  id          String      @id @default(cuid())
+  userId      String
+  amount      Int
+  status      PayoutStatus @default(REQUESTED)
+  method      String?
+  reference   String?
+  requestedAt DateTime     @default(now())
+  paidAt      DateTime?
+}
+
+model SettlementBatch {
+  id            String                @id @default(cuid())
+  periodStart   DateTime
+  periodEnd     DateTime
+  totalRestaurants Int
+  totalDrivers     Int
+  totalPlatform    Int
+  status           SettlementBatchStatus @default(OPEN)
+  createdAt        DateTime            @default(now())
 }

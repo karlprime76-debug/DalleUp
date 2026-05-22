@@ -8,7 +8,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return NextResponse.json({ message: "Non connecté." }, { status: 401 });
     const { id } = await params;
-    const order = await prisma.order.findFirst({ where: { customerId: session.user.id, OR: [{ id }, { orderNumber: id }] }, include: { restaurant: true, items: { include: { menuItem: true } }, payment: true, address: true } });
+    const order = await prisma.order.findFirst({ where: { customerId: session.user.id, OR: [{ id }, { orderNumber: id }] }, include: { restaurant: true, items: { include: { menuItem: true } }, payment: true, address: true, delivery: { include: { driver: { select: { id: true, name: true } } } } } });
     if (!order) return NextResponse.json({ message: "Commande introuvable." }, { status: 404 });
     return NextResponse.json({ order });
   } catch (error) {

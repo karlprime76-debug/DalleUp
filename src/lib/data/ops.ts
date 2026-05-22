@@ -12,6 +12,7 @@ export type OpsOrder = {
   driverId?: string;
   deliveryStatus?: string;
   address: string;
+  note?: string | null;
   createdAt: string;
   items: { name: string; quantity: number; total: number }[];
 };
@@ -76,7 +77,7 @@ export async function getOpsOrders(scope?: { restaurantOwnerId?: string; driverI
       orderBy: { createdAt: "desc" },
       take: 20
     });
-    if (!orders.length) return mockOpsOrders();
+    if (!orders.length) return scope?.restaurantOwnerId || scope?.driverId ? [] : mockOpsOrders();
     return orders.map((order) => ({
       dbId: order.id,
       id: order.orderNumber,
@@ -88,12 +89,13 @@ export async function getOpsOrders(scope?: { restaurantOwnerId?: string; driverI
       driverId: order.delivery?.driverId ?? undefined,
       deliveryStatus: order.delivery?.status ?? undefined,
       address: order.address ? `${order.address.street}, ${order.address.city}` : "Adresse client",
+      note: order.note,
       createdAt: order.createdAt.toLocaleString("fr-FR"),
       items: order.items.map((item) => ({ name: item.menuItem.name, quantity: item.quantity, total: item.total }))
     }));
   } catch (error) {
     warnFallback("getOpsOrders", error);
-    return mockOpsOrders();
+    return scope?.restaurantOwnerId || scope?.driverId ? [] : mockOpsOrders();
   }
 }
 

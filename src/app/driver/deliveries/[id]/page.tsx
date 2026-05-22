@@ -1,1 +1,17 @@
-import { DashboardShell } from '@/components/layout/dashboard-shell'; import { orders, restaurants, drivers, stats } from '@/lib/mock-data'; import { StatCard } from '@/components/ui/stat-card'; const nav=[{href:'/driver',label:'Accueil'},{href:'/driver/orders',label:'Commandes'},{href:'/driver/settings',label:'Paramètres'}]; export default function Page(){return <DashboardShell title='Détail Livraison' nav={nav}><div className='grid gap-4 md:grid-cols-4'><StatCard label='Commandes' value={String(stats.orders)} /><StatCard label='Restaurants' value={String(restaurants.length)} /><StatCard label='Livreurs' value={String(drivers.length)} /><StatCard label='CA' value={String(stats.revenue)} /></div><div className='mt-6 rounded-[2rem] bg-white p-5 shadow-sm'><h2 className='text-xl font-black'>Actions MVP</h2><p className='mt-2 text-neutral-500'>Gestion des statuts, menus, livreurs, paiements et paramètres prête à connecter aux APIs.</p><div className='mt-4 grid gap-2'>{orders.map(o=><div key={o.id} className='rounded-2xl bg-neutral-50 p-3'>{o.id} · {o.restaurant} · {o.status}</div>)}</div></div></DashboardShell>}
+import { DriverDeliveryDetail } from "@/components/driver/driver-delivery-detail";
+import { DashboardShell } from "@/components/layout/dashboard-shell";
+
+const nav = [
+  { href: "/driver/dashboard", label: "Accueil" },
+  { href: "/driver/deliveries", label: "Livraisons" },
+  { href: "/driver/earnings", label: "Gains" },
+];
+
+export default async function DriverDeliveryPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  return (
+    <DashboardShell title="Détail Livraison" nav={nav}>
+      <DriverDeliveryDetail orderId={id} />
+    </DashboardShell>
+  );
+}

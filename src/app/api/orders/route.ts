@@ -2,6 +2,10 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth/config";
 import { prisma } from "@/lib/db/prisma";
+import { sendEmail } from "@/lib/email/send-email";
+import { orderConfirmationClient, newOrderRestaurant } from "@/lib/email/templates";
+import { formatPrice } from "@/lib/pricing/delivery";
+import { getDeliveryFeeEstimate } from "@/lib/billing/delivery-fee";
 
 type OrderItemInput = {
   id?: string;
@@ -48,6 +52,13 @@ export async function POST(request: Request) {
     if (normalizedItems.some((item) => !item.menuItemId || !Number.isInteger(item.quantity) || item.quantity <= 0)) return NextResponse.json({ message: "Chaque plat doit avoir un identifiant et une quantité valide." }, { status: 400 });
     const paymentMethod = String(body.paymentMethod ?? "CASH_ON_DELIVERY");
     if (!allowedPaymentMethods.includes(paymentMethod as typeof allowedPaymentMethods[number])) return NextResponse.json({ message: "Méthode de paiement invalide." }, { status: 400 });
+    const deliveryAddress = String(body.deliveryAddress ?? "").trim();
+    const deliveryZone = String(body.deliveryZone ?? "").trim();
+    const deliveryPhone = String(body.deliveryPhone ?? "").trim();
+    const deliveryInstructions = String(body.deliveryInstructions ?? "").trim();
+    if (deliveryAddress.length < 5) return NextResponse.json({ message: "Adresse de livraison requise." }, { status: 400 });
+    if (deliveryZone.length < 2) return NextResponse.json({ message: "Quartier de livraison requis." }, { status: 400 });
+    if (deliveryPhone.length < 6) return NextResponse.json({ message: "Téléphone de livraison requis." }, { status: 400 });
 
     const restaurant = await prisma.restaurant.findFirst({ where: { OR: [{ id: restaurantId }, { slug: restaurantId }] } });
     if (!restaurant) return NextResponse.json({ message: "Restaurant indisponible en base." }, { status: 404 });
@@ -55,12 +66,16 @@ export async function POST(request: Request) {
     const menuItems = await prisma.menuItem.findMany({ where: { id: { in: normalizedItems.map((item) => item.menuItemId) }, restaurantId: restaurant.id, isActive: true } });
     if (menuItems.length !== items.length) return NextResponse.json({ message: "Certains plats ne sont pas disponibles en base." }, { status: 404 });
 
-    const address = await prisma.address.findFirst({ where: { userId: session.user.id }, orderBy: [{ isDefault: "desc" }, { id: "asc" }] });
+    const existingAddress = await prisma.address.findFirst({ where: { userId: session.user.id, street: deliveryAddress } });
+    const address = existingAddress ?? await prisma.address.create({ data: { userId: session.user.id, label: "Livraison", street: deliveryAddress, city: "Cotonou", zone: deliveryZone, isDefault: false } });
     const subtotal = normalizedItems.reduce((sum, item) => {
       const menuItem = menuItems.find((entry) => entry.id === item.menuItemId);
       return sum + (menuItem?.price ?? 0) * item.quantity;
     }, 0);
-    const deliveryFee = restaurant.deliveryFee;
+    const deliveryFee = getDeliveryFeeEstimate({ zone: deliveryZone });
+    if (deliveryFee === null) {
+      return NextResponse.json({ message: "Frais de livraison non calculables pour ce quartier." }, { status: 400 });
+    }
     const total = subtotal + deliveryFee;
 
     const order = await prisma.order.create({
@@ -69,6 +84,7 @@ export async function POST(request: Request) {
         customerId: session.user.id,
         restaurantId: restaurant.id,
         addressId: address?.id,
+        note: deliveryInstructions ? `${deliveryInstructions} · Téléphone: ${deliveryPhone}` : `Téléphone: ${deliveryPhone}`,
         subtotal,
         deliveryFee,
         total,
@@ -81,6 +97,27 @@ export async function POST(request: Request) {
       },
       include: { restaurant: true, items: { include: { menuItem: true } }, payment: true, address: true }
     });
+
+    const customer = await prisma.user.findUnique({ where: { id: session.user.id }, select: { email: true, name: true } }).catch(() => null);
+
+    try {
+      if (customer?.email) {
+        const template = orderConfirmationClient(order.orderNumber, formatPrice(order.total), order.restaurant.name);
+        await sendEmail({ to: customer.email, subject: template.subject, html: template.html, text: template.text });
+      }
+    } catch {
+      /* L'email ne bloque pas la commande */
+    }
+
+    try {
+      const owner = await prisma.user.findUnique({ where: { id: restaurant.ownerId }, select: { email: true, name: true } });
+      if (owner?.email) {
+        const template = newOrderRestaurant(order.orderNumber, formatPrice(order.total), customer?.name || "Client");
+        await sendEmail({ to: owner.email, subject: template.subject, html: template.html, text: template.text });
+      }
+    } catch {
+      /* L'email ne bloque pas la commande */
+    }
 
     return NextResponse.json({ order: serializeOrder(order) }, { status: 201 });
   } catch (error) {
