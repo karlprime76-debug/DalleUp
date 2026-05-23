@@ -1,5 +1,4 @@
 import { ShoppingBag } from "lucide-react";
-import { AppHeader } from "@/components/customer/app-header";
 import { CategoryPill } from "@/components/customer/category-pill";
 import { MenuItemCard } from "@/components/customer/menu-item-card";
 import { PromoBanner } from "@/components/customer/promo-banner";
@@ -14,7 +13,6 @@ export default async function CustomerHomePage() {
 
   return (
     <>
-      <AppHeader />
       <main className="px-4 py-5">
         <div className="mx-auto max-w-6xl">
           <div className="flex items-end justify-between gap-4">

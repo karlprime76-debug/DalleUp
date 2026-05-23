@@ -1,16 +1,24 @@
 import { ArrowRight, Bike, Building2, Clock, Flame, MapPin, ShieldCheck, Sparkles, Star, Utensils } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { getServerSession } from "next-auth";
 import { RestaurantCard } from "@/components/customer/restaurant-card";
 import { SiteHeader } from "@/components/layout/site-header";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { authOptions } from "@/lib/auth/config";
+import { getDashboardPathByRole, type UserRole } from "@/lib/auth/roles";
 import { menuItems, restaurants } from "@/lib/mock-data";
 import { formatPrice } from "@/lib/pricing/delivery";
 import { site } from "@/lib/site";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const session = await getServerSession(authOptions);
+  const role = session?.user?.role as UserRole | undefined;
+  const dashboardHref = getDashboardPathByRole(role);
+  const isLoggedIn = !!session?.user;
+
   const steps = [
     { icon: Utensils, title: "Choisissez votre envie", text: "Pizza, grillades, burger ou plat béninois : filtrez et commandez." },
     { icon: Sparkles, title: "Validez en 2 clics", text: "Panier clair, frais visibles, paiement sécurisé." },
@@ -28,18 +36,36 @@ export default function HomePage() {
             <div className="flex flex-col justify-center">
               <Badge variant="lime" className="w-fit"><Flame size={14} /> Food delivery nouvelle génération</Badge>
               <Image src="/brand/dalleup-logo-slogan.svg" alt={`${site.name} - ${site.slogan}`} width={430} height={242} className="mt-6 h-auto w-full max-w-md rounded-[2rem] bg-white p-4 shadow-2xl" priority />
-              <h1 className="mt-6 text-5xl font-black leading-[0.95] tracking-tight md:text-7xl">T’as la dalle ?</h1>
-              <p className="mt-4 text-3xl font-black text-dalle-orange md:text-5xl">Commande. Chill. On livre.</p>
-              <p className="mt-6 max-w-xl text-lg text-white/70">{site.name} transforme la commande repas en vraie expérience mobile : rapide, fun, claire et locale.</p>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <ButtonLink href="/app" size="lg">Commander en tant que client <ArrowRight size={18} /></ButtonLink>
-                <ButtonLink href="/login" variant="ghost" size="lg">Se connecter</ButtonLink>
-              </div>
-              <div className="mt-3 flex flex-col gap-3 sm:flex-row">
-                <ButtonLink href="/register" variant="secondary" size="lg">Créer un compte client</ButtonLink>
-                <ButtonLink href="/register?role=RESTAURANT" variant="ghost" size="lg">Devenir restaurant partenaire</ButtonLink>
-                <ButtonLink href="/register?role=DELIVERY_DRIVER" variant="ghost" size="lg">Devenir livreur DalleUp</ButtonLink>
-              </div>
+              {isLoggedIn ? (
+                <>
+                  <h1 className="mt-6 text-5xl font-black leading-[0.95] tracking-tight md:text-7xl">Bon retour sur DalleUp</h1>
+                  <p className="mt-4 text-3xl font-black text-dalle-orange md:text-5xl">{session.user.name ? `Heureux de te revoir, ${session.user.name} !` : "Heureux de te revoir !"}</p>
+                  <p className="mt-6 max-w-xl text-lg text-white/70">Retrouve tes restaurants préférés, tes commandes et ton tableau de bord en un clic.</p>
+                  <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                    <ButtonLink href={dashboardHref} size="lg">Aller à mon tableau de bord <ArrowRight size={18} /></ButtonLink>
+                    <ButtonLink href="/app/restaurants" variant="ghost" size="lg">Voir les restaurants</ButtonLink>
+                  </div>
+                  <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+                    <ButtonLink href="/app/orders" variant="secondary" size="lg">Mes commandes</ButtonLink>
+                    <ButtonLink href="/app/profile" variant="ghost" size="lg">Mon profil</ButtonLink>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h1 className="mt-6 text-5xl font-black leading-[0.95] tracking-tight md:text-7xl">T&apos;as la dalle ?</h1>
+                  <p className="mt-4 text-3xl font-black text-dalle-orange md:text-5xl">Commande. Chill. On livre.</p>
+                  <p className="mt-6 max-w-xl text-lg text-white/70">{site.name} transforme la commande repas en vraie expérience mobile : rapide, fun, claire et locale.</p>
+                  <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                    <ButtonLink href="/app" size="lg">Commander en tant que client <ArrowRight size={18} /></ButtonLink>
+                    <ButtonLink href="/login" variant="ghost" size="lg">Se connecter</ButtonLink>
+                  </div>
+                  <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+                    <ButtonLink href="/register" variant="secondary" size="lg">Créer un compte client</ButtonLink>
+                    <ButtonLink href="/register?role=RESTAURANT" variant="ghost" size="lg">Devenir restaurant partenaire</ButtonLink>
+                    <ButtonLink href="/register?role=DELIVERY_DRIVER" variant="ghost" size="lg">Devenir livreur DalleUp</ButtonLink>
+                  </div>
+                </>
+              )}
             </div>
             <div className="relative min-h-[470px]">
               <div className="absolute inset-x-6 top-4 rotate-3 rounded-[2.5rem] bg-dalle-orange p-4 shadow-glow">
@@ -77,8 +103,8 @@ export default function HomePage() {
         </section>
 
         <section className="mx-auto grid max-w-7xl gap-5 px-4 py-10 md:grid-cols-2">
-          <Card className="bg-dalle-charcoal p-8 text-white"><Building2 className="text-dalle-lime" /><h2 className="mt-4 text-3xl font-black">Restaurants partenaires</h2><p className="mt-3 text-white/70">Recevez plus de commandes, gérez votre menu et suivez vos ventes simplement.</p><ButtonLink href="/register?role=RESTAURANT" className="mt-6" variant="secondary">Rejoindre DalleUp</ButtonLink></Card>
-          <Card className="p-8"><Bike className="text-dalle-orange" /><h2 className="mt-4 text-3xl font-black">Livreurs DalleUp</h2><p className="mt-3 text-neutral-500">Livraisons assignées, statuts clairs, historique et gains dans un espace dédié.</p><ButtonLink href="/register?role=DELIVERY_DRIVER" className="mt-6" variant="dark">Devenir livreur</ButtonLink></Card>
+          <Card className="bg-dalle-charcoal p-8 text-white"><Building2 className="text-dalle-lime" /><h2 className="mt-4 text-3xl font-black">Restaurants partenaires</h2><p className="mt-3 text-white/70">Recevez plus de commandes, gérez votre menu et suivez vos ventes simplement.</p>{isLoggedIn ? <ButtonLink href="/partners" className="mt-6" variant="secondary">Découvrir le programme</ButtonLink> : <ButtonLink href="/register?role=RESTAURANT" className="mt-6" variant="secondary">Rejoindre DalleUp</ButtonLink>}</Card>
+          <Card className="p-8"><Bike className="text-dalle-orange" /><h2 className="mt-4 text-3xl font-black">Livreurs DalleUp</h2><p className="mt-3 text-neutral-500">Livraisons assignées, statuts clairs, historique et gains dans un espace dédié.</p>{isLoggedIn ? <ButtonLink href="/delivery" className="mt-6" variant="dark">En savoir plus</ButtonLink> : <ButtonLink href="/register?role=DELIVERY_DRIVER" className="mt-6" variant="dark">Devenir livreur</ButtonLink>}</Card>
         </section>
 
         <footer className="mt-10 bg-dalle-charcoal px-4 py-10 text-white">

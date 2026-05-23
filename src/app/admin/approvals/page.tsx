@@ -1,19 +1,12 @@
 import { requireAdmin } from "@/lib/auth/guards";
 import { AdminShell } from "@/components/layout/admin-shell";
+import { adminNavSections } from "@/lib/navigation/admin-nav";
 import { RestaurantStatusActions } from "@/components/ops/restaurant-status-actions";
 import { DriverStatusActions } from "@/components/ops/driver-status-actions";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { getOpsRestaurants, getOpsDrivers } from "@/lib/data/ops";
 
-const nav = [
-  { href: "/admin", label: "Accueil" },
-  { href: "/admin/orders", label: "Commandes" },
-  { href: "/admin/restaurants", label: "Restaurants" },
-  { href: "/admin/drivers", label: "Livreurs" },
-  { href: "/admin/approvals", label: "Validations" },
-  { href: "/admin/settings", label: "Paramètres" }
-];
 
 function statusVariant(status: string) {
   if (status === "APPROVED" || status === "AVAILABLE") return "lime";
@@ -28,7 +21,7 @@ export default async function AdminApprovalsPage() {
   const pendingDrivers = drivers.filter((d) => d.status === "PENDING");
 
   return (
-    <AdminShell title="Validations en attente" nav={nav}>
+    <AdminShell title="Validations en attente" sections={adminNavSections}>
       <div className="grid gap-6 xl:grid-cols-2">
         <Card className="p-5">
           <h2 className="text-xl font-black">Restaurants en attente ({pendingRestaurants.length})</h2>

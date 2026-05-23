@@ -1,17 +1,10 @@
 import { requireAdmin } from "@/lib/auth/guards";
 import { AdminShell } from "@/components/layout/admin-shell";
+import { adminNavSections } from "@/lib/navigation/admin-nav";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { prisma } from "@/lib/db/prisma";
 
-const nav = [
-  { href: "/admin", label: "Accueil" },
-  { href: "/admin/orders", label: "Commandes" },
-  { href: "/admin/restaurants", label: "Restaurants" },
-  { href: "/admin/drivers", label: "Livreurs" },
-  { href: "/admin/reviews", label: "Avis" },
-  { href: "/admin/audit", label: "Audit" }
-];
 
 export default async function AdminReviewsPage() {
   await requireAdmin();
@@ -22,7 +15,7 @@ export default async function AdminReviewsPage() {
   }).catch(() => []);
 
   return (
-    <AdminShell title="Avis clients" nav={nav}>
+    <AdminShell title="Avis clients" sections={adminNavSections}>
       <Card className="p-5">
         <h2 className="text-xl font-black">Avis récents</h2>
         <p className="mt-2 text-sm text-neutral-500">Les avis sont liés aux commandes livrées. Le modèle actuel ne permet pas de noter séparément le livreur ni le service : cette fonctionnalité nécessitera une migration future.</p>

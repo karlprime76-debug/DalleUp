@@ -7,7 +7,7 @@ const items = [
   { href: "/driver/dashboard", label: "Dashboard", icon: Home },
   { href: "/driver/deliveries", label: "Livraisons", icon: Truck },
   { href: "/driver/earnings", label: "Gains", icon: Wallet },
-  { href: "/driver/wallet", label: "Solde", icon: User }
+  { href: "/driver/profile", label: "Profil", icon: User }
 ];
 
 export function BottomNavDriver() {

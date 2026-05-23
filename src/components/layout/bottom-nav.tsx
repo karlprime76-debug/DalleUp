@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Heart, Home, ReceiptText, Search, ShoppingBag, User } from "lucide-react";
+import { Home, ReceiptText, Search, ShoppingBag, User } from "lucide-react";
 import { useCart } from "@/lib/cart/cart-store";
 
 const items = [

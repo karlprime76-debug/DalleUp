@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { DashboardShell } from "./dashboard-shell";
+import { DashboardShell, type NavSection } from "./dashboard-shell";
 
-export function RestaurantShell({ title, nav, children }: { title: string; nav: { href: string; label: string }[]; children: ReactNode }) {
-  return <DashboardShell title={title} nav={nav} logoHref="/restaurant/dashboard">{children}</DashboardShell>;
+export function RestaurantShell({ title, nav, sections, children }: { title: string; nav?: { href: string; label: string }[]; sections?: NavSection[]; children: ReactNode }) {
+  return <DashboardShell title={title} nav={nav} sections={sections} logoHref="/restaurant/dashboard" publicHref="/">{children}</DashboardShell>;
 }

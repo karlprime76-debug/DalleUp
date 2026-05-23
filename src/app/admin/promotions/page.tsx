@@ -1,17 +1,11 @@
 import { requireAdmin } from "@/lib/auth/guards";
 import { AdminShell } from "@/components/layout/admin-shell";
+import { adminNavSections } from "@/lib/navigation/admin-nav";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { prisma } from "@/lib/db/prisma";
 import { formatPrice } from "@/lib/pricing/delivery";
 
-const nav = [
-  { href: "/admin", label: "Accueil" },
-  { href: "/admin/orders", label: "Commandes" },
-  { href: "/admin/restaurants", label: "Restaurants" },
-  { href: "/admin/promotions", label: "Promotions" },
-  { href: "/admin/sponsoring", label: "Sponsoring" }
-];
 
 function formatDate(date?: Date | null) {
   return date ? date.toLocaleDateString("fr-FR") : "—";
@@ -22,7 +16,7 @@ export default async function AdminPromotionsPage() {
   const promoCodes = await prisma.promoCode.findMany({ orderBy: { code: "asc" } }).catch(() => []);
 
   return (
-    <AdminShell title="Promotions" nav={nav}>
+    <AdminShell title="Promotions" sections={adminNavSections}>
       <Card className="p-5">
         <h2 className="text-xl font-black">Codes promo</h2>
         <p className="mt-2 text-sm text-neutral-500">Gestion MVP en lecture. La création et l’usage max nécessitent une interface dédiée et une migration pour les compteurs d’utilisation.</p>

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat-card";
 import { authOptions } from "@/lib/auth/config";
+import { adminNavSections } from "@/lib/navigation/admin-nav";
 import { getOpsDrivers, getOpsOrders, getOpsRestaurants, getOpsStats } from "@/lib/data/ops";
 import { formatPrice } from "@/lib/pricing/delivery";
 
@@ -49,7 +50,7 @@ export async function RoleDashboard({ role, title }: { role: keyof typeof navByR
   ]);
   const Shell = shellByRole[role];
   return (
-    <Shell title={title} nav={navByRole[role]}>
+    <Shell title={title} nav={role !== "admin" ? navByRole[role] : undefined} sections={role === "admin" ? adminNavSections : undefined}>
       <Card className="mb-6 flex flex-col justify-between gap-4 p-5 md:flex-row md:items-center">
         <div><p className="text-sm font-black text-dalle-orange">Connecté</p><h2 className="text-2xl font-black">{session?.user?.name ?? "Utilisateur DalleUp"}</h2><p className="text-sm text-neutral-500">{session?.user?.email} · {session?.user?.role}</p></div>
         <SignOutButton />
