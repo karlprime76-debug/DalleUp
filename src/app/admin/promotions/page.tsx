@@ -1,5 +1,5 @@
 import { requireAdmin } from "@/lib/auth/guards";
-import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { AdminShell } from "@/components/layout/admin-shell";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { prisma } from "@/lib/db/prisma";
@@ -22,7 +22,7 @@ export default async function AdminPromotionsPage() {
   const promoCodes = await prisma.promoCode.findMany({ orderBy: { code: "asc" } }).catch(() => []);
 
   return (
-    <DashboardShell title="Promotions" nav={nav}>
+    <AdminShell title="Promotions" nav={nav}>
       <Card className="p-5">
         <h2 className="text-xl font-black">Codes promo</h2>
         <p className="mt-2 text-sm text-neutral-500">Gestion MVP en lecture. La création et l’usage max nécessitent une interface dédiée et une migration pour les compteurs d’utilisation.</p>
@@ -44,6 +44,6 @@ export default async function AdminPromotionsPage() {
           )}
         </div>
       </Card>
-    </DashboardShell>
+    </AdminShell>
   );
 }

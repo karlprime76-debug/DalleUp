@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -78,7 +79,9 @@ export function RegisterForm({ role = "CLIENT" }: { role?: "CLIENT" | "RESTAURAN
   }
 
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-md rounded-[2rem] bg-white p-6 shadow-sm">
+    <div className="w-full max-w-md">
+      <Link href="/" aria-label="Retour à l'accueil" className="mb-4 inline-flex items-center gap-2 font-black text-dalle-charcoal"><Image src="/brand/dalleup-icon.svg" alt="DalleUp" width={32} height={32} className="rounded-xl shadow-sm" priority /><span>DalleUp</span></Link>
+    <form onSubmit={handleSubmit} className="w-full rounded-[2rem] bg-white p-6 shadow-sm">
       <p className="text-sm font-black text-dalle-orange">{content.eyebrow}</p>
       <h1 className="mt-2 text-3xl font-black">{content.title}</h1>
       {content.note ? <p className="mt-3 rounded-2xl bg-dalle-cream px-4 py-3 text-sm font-bold text-neutral-600">{content.note}</p> : null}
@@ -109,5 +112,6 @@ export function RegisterForm({ role = "CLIENT" }: { role?: "CLIENT" | "RESTAURAN
         <Link href="/register?role=DELIVERY_DRIVER" className="font-black text-dalle-orange">Devenir livreur</Link>
       </div>
     </form>
+    </div>
   );
 }

@@ -1,4 +1,5 @@
 import { ShoppingBag, Star } from "lucide-react";
+import { BackButton } from "@/components/layout/back-button";
 import { MenuItemCard } from "@/components/customer/menu-item-card";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
@@ -19,6 +20,7 @@ export default async function RestaurantDetailsPage({ params }: { params: Promis
   return (
     <main className="px-4 py-6">
       <div className="mx-auto max-w-5xl">
+        <BackButton href="/app/restaurants" label="Retour" />
         <Card className="overflow-hidden">
           <div className="h-56 bg-cover bg-center md:h-72" style={{ backgroundImage: `url(${restaurant.image})` }} />
           <div className="p-5">

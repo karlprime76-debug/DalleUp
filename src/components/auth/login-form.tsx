@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
@@ -33,7 +34,9 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-md rounded-[2rem] bg-white p-6 shadow-glow">
+    <div className="w-full max-w-md">
+      <Link href="/" aria-label="Retour à l'accueil" className="mb-4 inline-flex items-center gap-2 font-black text-dalle-charcoal"><Image src="/brand/dalleup-icon.svg" alt="DalleUp" width={32} height={32} className="rounded-xl shadow-sm" priority /><span>DalleUp</span></Link>
+    <form onSubmit={handleSubmit} className="w-full rounded-[2rem] bg-white p-6 shadow-glow">
       <p className="text-sm font-black text-dalle-orange">DalleUp</p>
       <h1 className="mt-2 text-3xl font-black">Connexion</h1>
       {error ? <div className="mt-5 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">{error}</div> : null}
@@ -43,5 +46,6 @@ export function LoginForm() {
       <p className="mt-4 text-center text-sm text-neutral-500"><Link href="/forgot-password" className="font-black text-dalle-orange">Mot de passe oublié ?</Link></p>
       <p className="mt-2 text-center text-sm text-neutral-500">Pas encore de compte ? <Link href="/register" className="font-black text-dalle-orange">Créer un compte client</Link></p>
     </form>
+    </div>
   );
 }

@@ -1,7 +1,9 @@
 import { getServerSession } from "next-auth";
 import { Bike, Building2, CreditCard, ReceiptText, Users } from "lucide-react";
 import { SignOutButton } from "@/components/auth/sign-out-button";
-import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { AdminShell } from "@/components/layout/admin-shell";
+import { RestaurantShell } from "@/components/layout/restaurant-shell";
+import { DriverShell } from "@/components/layout/driver-shell";
 import { OrderStatusBadge } from "@/components/orders/order-status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -31,6 +33,12 @@ const navByRole = {
   ]
 };
 
+const shellByRole = {
+  admin: AdminShell,
+  restaurant: RestaurantShell,
+  driver: DriverShell
+};
+
 export async function RoleDashboard({ role, title }: { role: keyof typeof navByRole; title: string }) {
   const session = await getServerSession(authOptions);
   const [stats, restaurants, drivers, orders] = await Promise.all([
@@ -39,8 +47,9 @@ export async function RoleDashboard({ role, title }: { role: keyof typeof navByR
     getOpsDrivers(),
     getOpsOrders(role === "restaurant" ? { restaurantOwnerId: session?.user?.id } : role === "driver" ? { driverId: session?.user?.id } : undefined)
   ]);
+  const Shell = shellByRole[role];
   return (
-    <DashboardShell title={title} nav={navByRole[role]}>
+    <Shell title={title} nav={navByRole[role]}>
       <Card className="mb-6 flex flex-col justify-between gap-4 p-5 md:flex-row md:items-center">
         <div><p className="text-sm font-black text-dalle-orange">Connecté</p><h2 className="text-2xl font-black">{session?.user?.name ?? "Utilisateur DalleUp"}</h2><p className="text-sm text-neutral-500">{session?.user?.email} · {session?.user?.role}</p></div>
         <SignOutButton />
@@ -66,6 +75,6 @@ export async function RoleDashboard({ role, title }: { role: keyof typeof navByR
           <div className="mt-6 rounded-3xl bg-neutral-50 p-4"><Users className="text-dalle-orange" /><p className="mt-3 font-black">Centre d&apos;opérations DalleUp</p><p className="mt-1 text-sm text-neutral-500">Gérez vos commandes, vos livraisons et vos revenus en un seul endroit.</p></div>
         </Card>
       </div>
-    </DashboardShell>
+    </Shell>
   );
 }

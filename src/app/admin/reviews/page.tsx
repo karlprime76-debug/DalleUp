@@ -1,5 +1,5 @@
 import { requireAdmin } from "@/lib/auth/guards";
-import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { AdminShell } from "@/components/layout/admin-shell";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { prisma } from "@/lib/db/prisma";
@@ -22,7 +22,7 @@ export default async function AdminReviewsPage() {
   }).catch(() => []);
 
   return (
-    <DashboardShell title="Avis clients" nav={nav}>
+    <AdminShell title="Avis clients" nav={nav}>
       <Card className="p-5">
         <h2 className="text-xl font-black">Avis récents</h2>
         <p className="mt-2 text-sm text-neutral-500">Les avis sont liés aux commandes livrées. Le modèle actuel ne permet pas de noter séparément le livreur ni le service : cette fonctionnalité nécessitera une migration future.</p>
@@ -41,6 +41,6 @@ export default async function AdminReviewsPage() {
           )}
         </div>
       </Card>
-    </DashboardShell>
+    </AdminShell>
   );
 }

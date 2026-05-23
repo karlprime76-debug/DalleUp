@@ -1,5 +1,5 @@
 import { requireAdmin } from "@/lib/auth/guards";
-import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { AdminShell } from "@/components/layout/admin-shell";
 import { RestaurantStatusActions } from "@/components/ops/restaurant-status-actions";
 import { DriverStatusActions } from "@/components/ops/driver-status-actions";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +28,7 @@ export default async function AdminApprovalsPage() {
   const pendingDrivers = drivers.filter((d) => d.status === "PENDING");
 
   return (
-    <DashboardShell title="Validations en attente" nav={nav}>
+    <AdminShell title="Validations en attente" nav={nav}>
       <div className="grid gap-6 xl:grid-cols-2">
         <Card className="p-5">
           <h2 className="text-xl font-black">Restaurants en attente ({pendingRestaurants.length})</h2>
@@ -78,6 +78,6 @@ export default async function AdminApprovalsPage() {
           </div>
         </Card>
       </div>
-    </DashboardShell>
+    </AdminShell>
   );
 }
