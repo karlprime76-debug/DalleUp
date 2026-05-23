@@ -7,14 +7,70 @@ import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { requireApprovedRestaurant } from "@/lib/auth/guards";
+import { requireRole } from "@/lib/auth/guards";
 import { getOpsOrders } from "@/lib/data/ops";
 import { getRestaurantMenuForOwner } from "@/lib/data/restaurant-menu";
+import { prisma } from "@/lib/db/prisma";
 import { restaurantNavSections } from "@/lib/navigation/restaurant-nav";
 import { formatPrice } from "@/lib/pricing/delivery";
 
+function isRestaurantProfileComplete(restaurant: { name: string; description: string; address: string; phone?: string | null }) {
+  return Boolean(
+    restaurant.name &&
+    restaurant.description &&
+    restaurant.description !== "En attente de configuration" &&
+    restaurant.address &&
+    restaurant.address !== "Non renseigné" &&
+    restaurant.phone
+  );
+}
+
 export default async function RestaurantDashboardPage() {
-  const { session, restaurant } = await requireApprovedRestaurant();
+  const session = await requireRole(["RESTAURANT"]);
+  const restaurant = await prisma.restaurant.findFirst({ where: { ownerId: session.user.id } });
+
+  if (!restaurant) {
+    return (
+      <RestaurantShell title="Configurer votre restaurant" sections={restaurantNavSections}>
+        <Card className="p-8">
+          <h1 className="text-2xl font-black">Configurez votre restaurant</h1>
+          <p className="mt-3 text-neutral-600">Votre compte restaurant existe, mais aucun profil restaurant n&apos;est encore lié à votre utilisateur.</p>
+          <ButtonLink href="/restaurant/onboarding" className="mt-5">Commencer</ButtonLink>
+        </Card>
+      </RestaurantShell>
+    );
+  }
+
+  const isComplete = isRestaurantProfileComplete(restaurant);
+
+  if (!isComplete) {
+    const checklist = [
+      { label: "Nom restaurant", done: Boolean(restaurant.name) },
+      { label: "Téléphone", done: Boolean(restaurant.phone) },
+      { label: "Adresse", done: Boolean(restaurant.address && restaurant.address !== "Non renseigné") },
+      { label: "Description", done: Boolean(restaurant.description && restaurant.description !== "En attente de configuration") },
+      { label: "Photo/logo plus tard", done: Boolean(restaurant.image) },
+    ];
+
+    return (
+      <RestaurantShell title="Compléter votre restaurant" sections={restaurantNavSections}>
+        <Card className="p-8">
+          <h1 className="text-2xl font-black">Complétez votre profil restaurant</h1>
+          <p className="mt-3 text-neutral-600">Votre espace restaurant est actif, mais quelques informations sont nécessaires avant validation.</p>
+          <div className="mt-5 grid gap-2">
+            {checklist.map((item) => (
+              <div key={item.label} className="flex items-center justify-between rounded-2xl bg-neutral-50 px-4 py-3 text-sm font-bold">
+                <span>{item.label}</span>
+                <span className={item.done ? "text-dalle-lime" : "text-dalle-orange"}>{item.done ? "OK" : "À compléter"}</span>
+              </div>
+            ))}
+          </div>
+          <ButtonLink href="/restaurant/onboarding" className="mt-5">Compléter mon profil</ButtonLink>
+        </Card>
+      </RestaurantShell>
+    );
+  }
+
   const [orders, menu] = await Promise.all([getOpsOrders({ restaurantOwnerId: session.user.id }), getRestaurantMenuForOwner(session.user.id)]);
   const activeOrders = orders.filter((order) => !["DELIVERED", "CANCELLED"].includes(order.status));
   const deliveredOrders = orders.filter((order) => order.status === "DELIVERED");
@@ -24,6 +80,12 @@ export default async function RestaurantDashboardPage() {
   return (
     <RestaurantShell title="Tableau de bord" sections={restaurantNavSections}>
       {/* Alertes */}
+      {restaurant.status === "PENDING" && (
+        <Card className="mb-5 border-dashed border-dalle-orange/30 bg-orange-50/50 p-5">
+          <p className="font-black text-dalle-orange">Votre restaurant est en attente de validation.</p>
+          <p className="mt-2 text-sm text-neutral-600">Vous pouvez préparer votre profil et votre menu pendant que l&apos;admin vérifie votre demande.</p>
+        </Card>
+      )}
       {!hasProducts && (
         <Card className="mb-5 border-dashed border-dalle-orange/30 bg-orange-50/50 p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
