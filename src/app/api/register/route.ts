@@ -49,7 +49,26 @@ export async function POST(request: Request) {
     if (existing) return NextResponse.json({ message: "Cet email est déjà utilisé." }, { status: 409 });
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const user = await prisma.user.create({ data: { name, email, phone: phone || null, passwordHash, role: requestedRole as typeof allowedPublicRoles[number] }, select: { id: true, name: true, email: true, role: true } });
+
+    const user = await prisma.user.create({
+      data: { name, email, phone: phone || null, passwordHash, role: requestedRole as typeof allowedPublicRoles[number] },
+      select: { id: true, name: true, email: true, role: true }
+    });
+
+    if (requestedRole === "RESTAURANT") {
+      const slug = String(name).toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") + "-" + Date.now().toString(36);
+      await prisma.restaurant.create({
+        data: {
+          ownerId: user.id,
+          name,
+          slug,
+          description: "En attente de configuration",
+          address: "Non renseigné",
+          phone: phone || null,
+          status: "PENDING",
+        }
+      });
+    }
 
     return NextResponse.json({ success: true, message: "Compte créé avec succès.", role: user.role, user }, { status: 201 });
   } catch (error) {

@@ -6,6 +6,7 @@ import { DriverStatusActions } from "@/components/ops/driver-status-actions";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { getOpsRestaurants, getOpsDrivers } from "@/lib/data/ops";
+import { getResidenceProofStatus, getVerificationManifest } from "@/lib/supabase/verification-storage";
 
 
 function statusVariant(status: string) {
@@ -14,11 +15,36 @@ function statusVariant(status: string) {
   return "neutral";
 }
 
+function residenceStatusLabel(status: string) {
+  if (status === "missing") return "Preuve de résidence manquante";
+  if (status === "submitted") return "Preuve de résidence en attente";
+  if (status === "approved") return "Preuve de résidence validée";
+  if (status === "rejected") return "Preuve de résidence rejetée";
+  if (status === "expired") return "Preuve de résidence expirée";
+  return "Preuve de résidence à renouveler bientôt";
+}
+
 export default async function AdminApprovalsPage() {
   await requireAdmin();
   const [restaurants, drivers] = await Promise.all([getOpsRestaurants(), getOpsDrivers()]);
   const pendingRestaurants = restaurants.filter((r) => r.status === "PENDING");
   const pendingDrivers = drivers.filter((d) => d.status === "PENDING");
+  const restaurantResidenceProofs = new Map(
+    await Promise.all(
+      pendingRestaurants.map(async (restaurant) => {
+        const manifest = restaurant.ownerId ? await getVerificationManifest(restaurant.ownerId) : null;
+        return [restaurant.id, getResidenceProofStatus(manifest)] as const;
+      })
+    )
+  );
+  const driverResidenceProofs = new Map(
+    await Promise.all(
+      pendingDrivers.map(async (driver) => {
+        const manifest = driver.dbId ? await getVerificationManifest(driver.dbId) : null;
+        return [driver.id, getResidenceProofStatus(manifest)] as const;
+      })
+    )
+  );
 
   return (
     <AdminShell title="Validations en attente" sections={adminNavSections}>
@@ -40,6 +66,8 @@ export default async function AdminApprovalsPage() {
                   <div>
                     <p className="text-sm font-bold">Propriétaire</p>
                     <p className="text-sm text-neutral-500">{restaurant.owner}</p>
+                    <p className="mt-1 text-xs font-bold text-neutral-400">{residenceStatusLabel(restaurantResidenceProofs.get(restaurant.id)?.lifecycleStatus ?? "missing")}</p>
+                    <p className="text-xs text-neutral-400">Expiration : {restaurantResidenceProofs.get(restaurant.id)?.document?.expiresAt ? new Date(restaurantResidenceProofs.get(restaurant.id)!.document!.expiresAt!).toLocaleDateString("fr-FR") : "—"}</p>
                   </div>
                   <Badge variant={statusVariant(restaurant.status)}>{restaurant.status}</Badge>
                   <RestaurantStatusActions restaurantId={restaurant.dbId} />
@@ -62,6 +90,8 @@ export default async function AdminApprovalsPage() {
                     <p className="font-black">{driver.name}</p>
                     <p className="text-sm text-neutral-500">{driver.email}</p>
                     <p className="text-xs font-bold text-neutral-400">{driver.phone}</p>
+                    <p className="mt-1 text-xs font-bold text-neutral-400">{residenceStatusLabel(driverResidenceProofs.get(driver.id)?.lifecycleStatus ?? "missing")}</p>
+                    <p className="text-xs text-neutral-400">Expiration : {driverResidenceProofs.get(driver.id)?.document?.expiresAt ? new Date(driverResidenceProofs.get(driver.id)!.document!.expiresAt!).toLocaleDateString("fr-FR") : "—"}</p>
                   </div>
                   <Badge variant={statusVariant(driver.status)}>{driver.status}</Badge>
                   <DriverStatusActions driverId={driver.dbId} />

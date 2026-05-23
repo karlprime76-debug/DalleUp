@@ -20,6 +20,7 @@ export type OpsOrder = {
 export type OpsRestaurant = {
   id: string;
   dbId?: string;
+  ownerId?: string;
   name: string;
   owner: string;
   phone: string;
@@ -103,7 +104,7 @@ export async function getOpsRestaurants(): Promise<OpsRestaurant[]> {
   try {
     const restaurants = await prisma.restaurant.findMany({ include: { owner: true, _count: { select: { orders: true, menuItems: true } } }, orderBy: { createdAt: "desc" }, take: 20 });
     if (!restaurants.length) return mockRestaurants.map((restaurant) => ({ id: restaurant.id, name: restaurant.name, owner: "Démo DalleUp", phone: "—", address: "Cotonou", status: "APPROVED", rating: restaurant.rating, orders: mockOrders.filter((order) => order.restaurant === restaurant.name).length, menuItems: 0, isMock: true }));
-    return restaurants.map((restaurant) => ({ id: restaurant.slug, dbId: restaurant.id, name: restaurant.name, owner: restaurant.owner.name, phone: restaurant.phone ?? "—", address: restaurant.address, status: restaurant.status, rating: restaurant.rating, orders: restaurant._count.orders, menuItems: restaurant._count.menuItems }));
+    return restaurants.map((restaurant) => ({ id: restaurant.slug, dbId: restaurant.id, ownerId: restaurant.ownerId, name: restaurant.name, owner: restaurant.owner.name, phone: restaurant.phone ?? "—", address: restaurant.address, status: restaurant.status, rating: restaurant.rating, orders: restaurant._count.orders, menuItems: restaurant._count.menuItems }));
   } catch (error) {
     warnFallback("getOpsRestaurants", error);
     return mockRestaurants.map((restaurant) => ({ id: restaurant.id, name: restaurant.name, owner: "Démo DalleUp", phone: "—", address: "Cotonou", status: "APPROVED", rating: restaurant.rating, orders: mockOrders.filter((order) => order.restaurant === restaurant.name).length, menuItems: 0, isMock: true }));
