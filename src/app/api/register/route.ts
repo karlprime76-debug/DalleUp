@@ -1,11 +1,18 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db/prisma";
+import { rateLimit } from "@/lib/rate-limit";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const allowedPublicRoles = ["CLIENT", "RESTAURANT", "DELIVERY_DRIVER"] as const;
 
 export const runtime = "nodejs";
+
+function getClientIp(request: Request): string {
+  const forwarded = request.headers.get("x-forwarded-for");
+  if (forwarded) return forwarded.split(",")[0].trim();
+  return "unknown";
+}
 
 function getPrismaCode(error: unknown) {
   return typeof error === "object" && error && "code" in error ? String(error.code) : null;
@@ -25,6 +32,15 @@ function getSafeErrorMessage(error: unknown) {
 
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request);
+    const limit = rateLimit(ip, "/api/register");
+    if (!limit.ok) {
+      return NextResponse.json(
+        { message: "Trop de tentatives. Réessayez plus tard." },
+        { status: 429, headers: { "Retry-After": String(limit.retryAfter ?? 60) } }
+      );
+    }
+
     const body = await request.json();
     const name = String(body.name ?? "").trim();
     const email = String(body.email ?? "").trim().toLowerCase();
@@ -33,7 +49,7 @@ export async function POST(request: Request) {
     const confirmPassword = String(body.confirmPassword ?? "");
     const requestedRole = String(body.role ?? "CLIENT");
 
-    console.info("[DalleUp register] received", { email, role: requestedRole });
+    if (process.env.NODE_ENV !== "production") console.info("[DalleUp register] received", { email, role: requestedRole });
 
     if (!name || !email || !password || !confirmPassword) return NextResponse.json({ message: "Tous les champs obligatoires doivent être remplis." }, { status: 400 });
     if (name.length < 2) return NextResponse.json({ message: "Le nom doit contenir au moins 2 caractères." }, { status: 400 });
@@ -42,10 +58,10 @@ export async function POST(request: Request) {
     if (password !== confirmPassword) return NextResponse.json({ message: "Les mots de passe ne correspondent pas." }, { status: 400 });
     if (!allowedPublicRoles.includes(requestedRole as typeof allowedPublicRoles[number])) return NextResponse.json({ message: "Type de compte invalide." }, { status: 400 });
 
-    console.info("[DalleUp register] validation ok", { email, role: requestedRole });
+    if (process.env.NODE_ENV !== "production") console.info("[DalleUp register] validation ok", { email, role: requestedRole });
 
     const existing = await prisma.user.findUnique({ where: { email } });
-    console.info("[DalleUp register] existing user", { email, exists: Boolean(existing) });
+    if (process.env.NODE_ENV !== "production") console.info("[DalleUp register] existing user", { email, exists: Boolean(existing) });
     if (existing) return NextResponse.json({ message: "Cet email est déjà utilisé." }, { status: 409 });
 
     const passwordHash = await bcrypt.hash(password, 10);

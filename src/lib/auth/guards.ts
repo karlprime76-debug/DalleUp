@@ -34,6 +34,16 @@ export async function requireRestaurantApi() {
   return { session, restaurant };
 }
 
+export async function requireRestaurantApiBasic() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) return { response: NextResponse.json({ message: "Authentification requise." }, { status: 401 }) };
+  if (session.user.role !== "RESTAURANT") return { response: NextResponse.json({ message: "Accès restaurant requis." }, { status: 403 }) };
+  const restaurant = await prisma.restaurant.findFirst({ where: { ownerId: session.user.id } });
+  if (!restaurant) return { response: NextResponse.json({ message: "Restaurant Prisma introuvable." }, { status: 404 }) };
+  if (restaurant.status === "SUSPENDED") return { response: NextResponse.json({ message: "Compte suspendu. Contactez le support." }, { status: 403 }) };
+  return { session, restaurant };
+}
+
 export async function requireApprovedRestaurant() {
   const session = await requireRole(["RESTAURANT"]);
   const restaurant = await prisma.restaurant.findFirst({ where: { ownerId: session.user.id } });

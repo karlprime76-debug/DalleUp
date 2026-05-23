@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { requireRestaurantApi } from "@/lib/auth/guards";
+import { requireRestaurantApiBasic } from "@/lib/auth/guards";
 import { getRestaurantSettings } from "@/lib/data/restaurant-settings";
 import { prisma } from "@/lib/db/prisma";
 
 export async function GET() {
-  const result = await requireRestaurantApi();
+  const result = await requireRestaurantApiBasic();
   if ("response" in result) return result.response;
   const settings = await getRestaurantSettings(result.session.user.id);
   return NextResponse.json({ settings });
@@ -12,7 +12,7 @@ export async function GET() {
 
 export async function PATCH(request: Request) {
   try {
-    const result = await requireRestaurantApi();
+    const result = await requireRestaurantApiBasic();
     if ("response" in result) return result.response;
     const { restaurant } = result;
     const body = await request.json();

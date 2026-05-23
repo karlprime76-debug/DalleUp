@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireRestaurantApi } from "@/lib/auth/guards";
+import { requireRestaurantApiBasic } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 
 async function getOwnedMenuItem(ownerId: string, id: string) {
@@ -8,7 +8,7 @@ async function getOwnedMenuItem(ownerId: string, id: string) {
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const result = await requireRestaurantApi();
+    const result = await requireRestaurantApiBasic();
     if ("response" in result) return result.response;
     const { id } = await params;
     const existing = await getOwnedMenuItem(result.session.user.id, id);

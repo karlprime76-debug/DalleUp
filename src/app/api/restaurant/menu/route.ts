@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireRestaurantApi } from "@/lib/auth/guards";
+import { requireRestaurantApiBasic } from "@/lib/auth/guards";
 import { getRestaurantMenuForOwner } from "@/lib/data/restaurant-menu";
 import { prisma } from "@/lib/db/prisma";
 
@@ -15,7 +15,7 @@ function isValidImageUrl(value: string) {
 }
 
 export async function GET() {
-  const result = await requireRestaurantApi();
+  const result = await requireRestaurantApiBasic();
   if ("response" in result) return result.response;
   const data = await getRestaurantMenuForOwner(result.session.user.id);
   return NextResponse.json(data);
@@ -23,7 +23,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const result = await requireRestaurantApi();
+    const result = await requireRestaurantApiBasic();
     if ("response" in result) return result.response;
     const { restaurant } = result;
     const body = await request.json();

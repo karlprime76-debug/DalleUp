@@ -1,16 +1,20 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { redirect } from "next/navigation";
 import { RestaurantShell } from "@/components/layout/restaurant-shell";
 import { RestaurantSettingsForm } from "@/components/restaurant/restaurant-settings-form";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { requireApprovedRestaurant } from "@/lib/auth/guards";
+import { requireRole } from "@/lib/auth/guards";
 import { getRestaurantSettings } from "@/lib/data/restaurant-settings";
 import { restaurantNavSections } from "@/lib/navigation/restaurant-nav";
 import { formatPrice } from "@/lib/pricing/delivery";
+import { prisma } from "@/lib/db/prisma";
 
 export default async function RestaurantProfilePage() {
-  const { session } = await requireApprovedRestaurant();
+  const session = await requireRole(["RESTAURANT"]);
+  const restaurant = await prisma.restaurant.findFirst({ where: { ownerId: session.user.id } });
+  if (!restaurant) redirect("/restaurant/onboarding");
   const settings = await getRestaurantSettings(session.user.id);
   if (!settings) return <RestaurantShell title="Profil restaurant"><Card className="p-5"><h2 className="text-xl font-black">Restaurant introuvable</h2></Card></RestaurantShell>;
 
