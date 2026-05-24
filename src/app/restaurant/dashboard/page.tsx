@@ -14,6 +14,16 @@ import { prisma } from "@/lib/db/prisma";
 import { restaurantNavSections } from "@/lib/navigation/restaurant-nav";
 import { formatPrice } from "@/lib/pricing/delivery";
 
+const restaurantDashboardSelect = {
+  id: true,
+  name: true,
+  description: true,
+  image: true,
+  address: true,
+  phone: true,
+  status: true,
+} as const;
+
 function isRestaurantProfileComplete(restaurant: { name: string; description: string; address: string; phone?: string | null }) {
   return Boolean(
     restaurant.name &&
@@ -30,7 +40,24 @@ export default async function RestaurantDashboardPage() {
   if (process.env.NODE_ENV !== "production") {
     console.log("[dashboard] user id:", session.user.id, "role:", session.user.role);
   }
-  const restaurant = await prisma.restaurant.findFirst({ where: { ownerId: session.user.id } });
+  let restaurant: Awaited<ReturnType<typeof prisma.restaurant.findFirst<{ where: { ownerId: string }; select: typeof restaurantDashboardSelect }>>>;
+  try {
+    restaurant = await prisma.restaurant.findFirst({ where: { ownerId: session.user.id }, select: restaurantDashboardSelect });
+  } catch (error) {
+    console.error("[restaurant dashboard] restaurant lookup failed", {
+      userId: session.user.id,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return (
+      <RestaurantShell title="Tableau de bord indisponible" sections={restaurantNavSections}>
+        <Card className="p-8">
+          <h1 className="text-2xl font-black">Impossible de charger votre restaurant</h1>
+          <p className="mt-3 text-neutral-600">Une erreur technique empêche l&apos;affichage du tableau de bord pour le moment.</p>
+          <ButtonLink href="/restaurant/onboarding" className="mt-5">Vérifier mon profil</ButtonLink>
+        </Card>
+      </RestaurantShell>
+    );
+  }
   if (process.env.NODE_ENV !== "production") {
     console.log("[dashboard] restaurant found:", Boolean(restaurant), "restaurant id:", restaurant?.id ?? "none", "status:", restaurant?.status ?? "none");
   }
