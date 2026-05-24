@@ -115,6 +115,6 @@ export async function POST(request: Request) {
     }
 
     if (code === "P2002") return NextResponse.json({ message: "Cet email est déjà utilisé." }, { status: 409 });
-    return NextResponse.json({ message: "Impossible de créer le compte pour le moment. Réessayez plus tard." }, { status: 500 });
+    return NextResponse.json({ message: "Impossible de créer le compte pour le moment. Réessayez plus tard.", debug: { name, code } }, { status: 500 });
   }
 }
