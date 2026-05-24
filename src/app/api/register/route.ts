@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db/prisma";
 import { rateLimit } from "@/lib/rate-limit";
+import { sanitizeErrorMessage, getPrismaErrorCode, getErrorName } from "@/lib/security/sanitize-error";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const allowedPublicRoles = ["CLIENT", "RESTAURANT", "DELIVERY_DRIVER"] as const;
@@ -14,23 +15,17 @@ function getClientIp(request: Request): string {
   return "unknown";
 }
 
-function getPrismaCode(error: unknown) {
-  return typeof error === "object" && error && "code" in error ? String(error.code) : null;
-}
-
-function getErrorName(error: unknown) {
-  return error instanceof Error ? error.name : typeof error;
-}
-
-function getSafeErrorMessage(error: unknown) {
-  if (!(error instanceof Error)) return null;
-  return error.message
-    .split("\n")
-    .map((line) => line.replace(/postgresql:\/\/\S+/gi, "[redacted-url]").replace(/postgres:\/\/\S+/gi, "[redacted-url]").trim())
-    .find((line) => line && !line.startsWith("Invalid `"));
+function getEmailDomain(email: string): string | null {
+  try {
+    return email.split("@")[1] ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function POST(request: Request) {
+  let email = "";
+  let requestedRole = "CLIENT";
   try {
     const ip = getClientIp(request);
     const limit = rateLimit(ip, "/api/register");
@@ -43,11 +38,11 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const name = String(body.name ?? "").trim();
-    const email = String(body.email ?? "").trim().toLowerCase();
+    email = String(body.email ?? "").trim().toLowerCase();
     const phone = String(body.phone ?? "").trim();
     const password = String(body.password ?? "");
     const confirmPassword = String(body.confirmPassword ?? "");
-    const requestedRole = String(body.role ?? "CLIENT");
+    requestedRole = String(body.role ?? "CLIENT");
 
     if (process.env.NODE_ENV !== "production") console.info("[DalleUp register] received", { email, role: requestedRole });
 
@@ -93,10 +88,31 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, message: "Compte créé avec succès.", role: user.role, user }, { status: 201 });
   } catch (error) {
-    const code = getPrismaCode(error);
+    const code = getPrismaErrorCode(error);
     const name = getErrorName(error);
-    const detail = getSafeErrorMessage(error);
-    console.warn("[DalleUp register] failed", { code, name, detail });
+    const detail = sanitizeErrorMessage(error);
+    const domain = getEmailDomain(email);
+
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[DalleUp register] failed", {
+        step: "register-failed",
+        role: requestedRole,
+        domain,
+        name,
+        code,
+        detail,
+        env: process.env.NODE_ENV,
+      });
+    } else {
+      console.error("[DalleUp register] failed", {
+        step: "register-failed",
+        role: requestedRole,
+        domain,
+        name,
+        code,
+      });
+    }
+
     if (code === "P2002") return NextResponse.json({ message: "Cet email est déjà utilisé." }, { status: 409 });
     return NextResponse.json({ message: "Impossible de créer le compte pour le moment. Réessayez plus tard." }, { status: 500 });
   }
