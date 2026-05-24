@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { RestaurantShell } from "@/components/layout/restaurant-shell";
 import { RestaurantSettingsForm } from "@/components/restaurant/restaurant-settings-form";
 import { Badge } from "@/components/ui/badge";
+import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { requireRole } from "@/lib/auth/guards";
 import { getRestaurantSettings } from "@/lib/data/restaurant-settings";
@@ -13,10 +14,31 @@ import { prisma } from "@/lib/db/prisma";
 
 export default async function RestaurantProfilePage() {
   const session = await requireRole(["RESTAURANT"]);
-  const restaurant = await prisma.restaurant.findFirst({ where: { ownerId: session.user.id } });
+  let restaurant;
+  try {
+    restaurant = await prisma.restaurant.findFirst({ where: { ownerId: session.user.id } });
+  } catch (error) {
+    const rawMessage = error instanceof Error ? error.message : String(error);
+    const safeMessage = rawMessage.replace(/postgresql:\/\/\S+/gi, "[redacted]").replace(/postgres:\/\/\S+/gi, "[redacted]").split("\n")[0];
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[restaurant profile] lookup failed", {
+        userId: session.user.id,
+        error: safeMessage,
+      });
+    }
+    return (
+      <RestaurantShell title="Profil restaurant" sections={restaurantNavSections}>
+        <Card className="p-8">
+          <h1 className="text-2xl font-black">Impossible de charger votre profil</h1>
+          <p className="mt-3 text-neutral-600">Une erreur technique empêche l&apos;affichage du profil pour le moment.</p>
+          <ButtonLink href="/restaurant/onboarding" className="mt-5">Vérifier mon profil</ButtonLink>
+        </Card>
+      </RestaurantShell>
+    );
+  }
   if (!restaurant) redirect("/restaurant/onboarding");
   const settings = await getRestaurantSettings(session.user.id);
-  if (!settings) return <RestaurantShell title="Profil restaurant"><Card className="p-5"><h2 className="text-xl font-black">Restaurant introuvable</h2></Card></RestaurantShell>;
+  if (!settings) return <RestaurantShell title="Profil restaurant" sections={restaurantNavSections}><Card className="p-5"><h2 className="text-xl font-black">Restaurant introuvable</h2></Card></RestaurantShell>;
 
   return (
     <RestaurantShell title="Profil restaurant" sections={restaurantNavSections}>

@@ -44,10 +44,14 @@ export default async function RestaurantDashboardPage() {
   try {
     restaurant = await prisma.restaurant.findFirst({ where: { ownerId: session.user.id }, select: restaurantDashboardSelect });
   } catch (error) {
-    console.error("[restaurant dashboard] restaurant lookup failed", {
-      userId: session.user.id,
-      error: error instanceof Error ? error.message : String(error),
-    });
+    const rawMessage = error instanceof Error ? error.message : String(error);
+    const safeMessage = rawMessage.replace(/postgresql:\/\/\S+/gi, "[redacted]").replace(/postgres:\/\/\S+/gi, "[redacted]").split("\n")[0];
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[restaurant dashboard] restaurant lookup failed", {
+        userId: session.user.id,
+        error: safeMessage,
+      });
+    }
     return (
       <RestaurantShell title="Tableau de bord indisponible" sections={restaurantNavSections}>
         <Card className="p-8">

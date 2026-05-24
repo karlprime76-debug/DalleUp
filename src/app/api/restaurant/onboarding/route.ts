@@ -33,7 +33,8 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     if (process.env.NODE_ENV !== "production") {
-      console.log("[DalleUp onboarding] body", JSON.stringify(body));
+      console.log("[DalleUp onboarding] step=body-received", { userId: session.user.id, role: session.user.role });
+      console.log("[DalleUp onboarding] step=body-fields", { name: Boolean(body.name), description: Boolean(body.description), address: Boolean(body.address), hasImage: Boolean(body.image) });
     }
     const name = String(body.name ?? "").trim();
     const description = String(body.description ?? "").trim();
@@ -44,6 +45,7 @@ export async function POST(request: Request) {
     const minDelayMin = Math.max(1, positiveNumber(body.minDelayMin, 20));
     const maxDelayMin = Math.max(minDelayMin, positiveNumber(body.maxDelayMin, 40));
 
+    if (!session.user.id) return NextResponse.json({ message: "Session invalide. Reconnectez-vous." }, { status: 401 });
     if (!name || name.length < 2) return NextResponse.json({ message: "Le nom du restaurant doit contenir au moins 2 caractères." }, { status: 400 });
     if (!description) return NextResponse.json({ message: "La description est requise." }, { status: 400 });
     if (!address) return NextResponse.json({ message: "L'adresse est requise." }, { status: 400 });
@@ -51,6 +53,9 @@ export async function POST(request: Request) {
     const slug = slugify(name) + "-" + Date.now().toString(36);
 
     const existing = await prisma.restaurant.findFirst({ where: { ownerId: session.user.id } });
+    if (process.env.NODE_ENV !== "production") {
+      console.log("[DalleUp onboarding] step=existing-check", { userId: session.user.id, hasExisting: Boolean(existing), existingId: existing?.id ?? null });
+    }
 
     let restaurant;
     if (existing) {
@@ -104,10 +109,13 @@ export async function POST(request: Request) {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorCode = (error as { code?: string }).code ?? "UNKNOWN";
-    console.error("[DalleUp onboarding] FAILED", { message: errorMessage, code: errorCode, env: process.env.NODE_ENV });
+    const safeMessage = errorMessage.replace(/postgresql:\/\/\S+/gi, "[redacted]").replace(/postgres:\/\/\S+/gi, "[redacted]").split("\n")[0];
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[DalleUp onboarding] FAILED", { message: safeMessage, code: errorCode });
+    }
     return NextResponse.json({
       message: "Création impossible pour le moment. Vérifiez les champs puis réessayez.",
-      error: process.env.NODE_ENV !== "production" ? errorMessage : undefined,
+      error: process.env.NODE_ENV !== "production" ? safeMessage : undefined,
       code: process.env.NODE_ENV !== "production" ? errorCode : undefined,
     }, { status: 503 });
   }

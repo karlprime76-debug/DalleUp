@@ -103,7 +103,7 @@ export default function RestaurantOnboardingPage() {
   const isConfigured = initial.name && initial.description && initial.address && initial.address !== "Non renseigné";
 
   return (
-    <main className="grid min-h-screen place-items-center bg-dalle-cream px-4 py-10">
+    <main className="grid min-h-screen place-items-center bg-dalle-cream px-4 py-10 pb-32">
       <div className="w-full max-w-xl">
         <Link href="/" aria-label="Retour à l'accueil" className="mb-6 inline-flex items-center gap-2 font-black text-dalle-charcoal">
           <Image src="/brand/dalleup-icon.svg" alt="DalleUp" width={32} height={32} className="rounded-xl shadow-sm" priority />
@@ -121,7 +121,7 @@ export default function RestaurantOnboardingPage() {
           <form onSubmit={handleSubmit} className="mt-6 grid gap-4" key={initial.name}>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="grid gap-2">
-                <label className="text-sm font-black text-dalle-charcoal" htmlFor="name">Nom du restaurant</label>
+                <label className="text-sm font-black text-dalle-charcoal" htmlFor="name">Nom du restaurant *</label>
                 <input id="name" name="name" required defaultValue={initial.name} placeholder="Ex : Chez Aïcha, Burger House" className="rounded-2xl bg-neutral-50 px-4 py-3 font-bold outline-none ring-dalle-orange/20 transition focus:ring-4" />
               </div>
               <div className="grid gap-2">
@@ -130,22 +130,25 @@ export default function RestaurantOnboardingPage() {
               </div>
             </div>
             <div className="grid gap-2">
-              <label className="text-sm font-black text-dalle-charcoal" htmlFor="description">Description du restaurant</label>
+              <label className="text-sm font-black text-dalle-charcoal" htmlFor="description">Description du restaurant *</label>
               <textarea id="description" name="description" required defaultValue={initial.description} placeholder="Type de cuisine, spécialités, ambiance, plats populaires..." className="min-h-24 rounded-2xl bg-neutral-50 px-4 py-3 font-bold outline-none ring-dalle-orange/20 transition focus:ring-4" />
               <p className="text-xs font-bold text-neutral-400">Cette description sera visible par les clients.</p>
             </div>
             <div className="grid gap-2">
-              <label className="text-sm font-black text-dalle-charcoal" htmlFor="address">Adresse / quartier</label>
+              <label className="text-sm font-black text-dalle-charcoal" htmlFor="address">Adresse / quartier *</label>
               <input id="address" name="address" required defaultValue={initial.address} placeholder="Ex : Fidjrossè, rue après pharmacie..." className="rounded-2xl bg-neutral-50 px-4 py-3 font-bold outline-none ring-dalle-orange/20 transition focus:ring-4" />
             </div>
             <div className="grid gap-2">
-              <label className="text-sm font-black text-dalle-charcoal">Photo de couverture</label>
+              <label className="text-sm font-black text-dalle-charcoal">Photo de couverture (optionnel)</label>
               <div className="grid gap-4 rounded-3xl bg-neutral-50 p-4 sm:grid-cols-[140px_1fr] sm:items-center">
                 <div className="h-32 rounded-2xl bg-white bg-cover bg-center ring-1 ring-black/5" style={{ backgroundImage: `url(${imageUrl || "/placeholder.svg"})` }} />
                 <div>
                   <input type="file" accept="image/*" onChange={handleImageChange} className="w-full rounded-2xl bg-white px-4 py-3 text-sm font-bold ring-1 ring-black/10 file:mr-3 file:rounded-xl file:border-0 file:bg-dalle-orange file:px-3 file:py-2 file:text-sm file:font-black file:text-white" />
                   <input name="image" type="hidden" value={imageUrl} />
-                  <p className="mt-2 text-xs font-bold text-neutral-400">{uploading ? "Upload de l’image en cours..." : "Ajoutez une photo depuis la galerie ou l’appareil photo."}</p>
+                  <p className="mt-2 text-xs font-bold text-neutral-400">{uploading ? "Upload de l'image en cours..." : "Vous pourrez ajouter une photo plus tard. Ce n'est pas obligatoire pour créer votre restaurant."}</p>
+                  {imageUrl ? (
+                    <button type="button" onClick={() => { setImageUrl(""); setNotice(null); }} className="mt-2 text-xs font-bold text-dalle-orange underline">Retirer la photo</button>
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -164,8 +167,8 @@ export default function RestaurantOnboardingPage() {
               </div>
             </div>
             <p className="text-xs font-bold text-neutral-400">Les délais sont en minutes. Les frais sont en FCFA.</p>
-            <Button type="submit" disabled={loading || uploading} className="mt-2">
-              {loading ? "Enregistrement..." : uploading ? "Upload en cours..." : isConfigured ? "Mettre à jour" : "Créer mon restaurant"}
+            <Button type="submit" disabled={loading} className="mt-2">
+              {loading ? "Enregistrement..." : isConfigured ? "Mettre à jour" : "Enregistrer mon restaurant"}
             </Button>
             <p className="text-center text-sm text-neutral-500">
               Votre restaurant sera soumis à validation avant d&apos;apparaître publiquement.
