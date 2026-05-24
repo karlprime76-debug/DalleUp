@@ -44,13 +44,18 @@ export async function requireRestaurantApiBasic() {
   return { session, restaurant };
 }
 
-export async function requireApprovedRestaurant() {
+export async function requireRestaurant() {
   const session = await requireRole(["RESTAURANT"]);
   const restaurant = await prisma.restaurant.findFirst({ where: { ownerId: session.user.id } });
   if (!restaurant) redirect("/restaurant/onboarding");
-  if (restaurant.status === "PENDING") redirect("/restaurant/pending");
   if (restaurant.status === "SUSPENDED") redirect("/restaurant/suspended");
   return { session, restaurant };
+}
+
+export async function requireApprovedRestaurant() {
+  const result = await requireRestaurant();
+  if (result.restaurant.status === "PENDING") redirect("/restaurant/pending");
+  return result;
 }
 
 export async function requireApprovedDriver() {

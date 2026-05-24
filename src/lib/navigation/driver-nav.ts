@@ -9,6 +9,7 @@ export const driverNavSections = [
   {
     title: "Livraisons",
     items: [
+      { href: "/driver/deliveries/available", label: "Livraisons disponibles" },
       { href: "/driver/deliveries", label: "Mes livraisons" },
     ]
   },

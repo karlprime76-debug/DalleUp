@@ -3,12 +3,12 @@ import { RestaurantShell } from "@/components/layout/restaurant-shell";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { requireApprovedRestaurant } from "@/lib/auth/guards";
+import { requireRestaurant } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { restaurantNavSections } from "@/lib/navigation/restaurant-nav";
 
 export default async function RestaurantCategoriesPage() {
-  const { restaurant } = await requireApprovedRestaurant();
+  const { restaurant } = await requireRestaurant();
   const categories = await prisma.menuCategory.findMany({ where: { restaurantId: restaurant.id }, orderBy: { sortOrder: "asc" } }).catch(() => []);
 
   return (

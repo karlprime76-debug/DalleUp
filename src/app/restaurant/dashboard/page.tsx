@@ -27,7 +27,13 @@ function isRestaurantProfileComplete(restaurant: { name: string; description: st
 
 export default async function RestaurantDashboardPage() {
   const session = await requireRole(["RESTAURANT"]);
+  if (process.env.NODE_ENV !== "production") {
+    console.log("[dashboard] user id:", session.user.id, "role:", session.user.role);
+  }
   const restaurant = await prisma.restaurant.findFirst({ where: { ownerId: session.user.id } });
+  if (process.env.NODE_ENV !== "production") {
+    console.log("[dashboard] restaurant found:", Boolean(restaurant), "restaurant id:", restaurant?.id ?? "none", "status:", restaurant?.status ?? "none");
+  }
 
   if (!restaurant) {
     return (

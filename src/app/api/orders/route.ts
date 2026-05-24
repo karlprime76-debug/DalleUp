@@ -29,7 +29,7 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return NextResponse.json({ message: "Non connecté." }, { status: 401 });
-    const orders = await prisma.order.findMany({ where: { customerId: session.user.id }, include: { restaurant: true, items: { include: { menuItem: true } }, payment: true, address: true }, orderBy: { createdAt: "desc" } });
+    const orders = await prisma.order.findMany({ where: { customerId: session.user.id }, include: { restaurant: true, items: { include: { menuItem: true } }, payment: true, address: true, delivery: { include: { driver: { select: { name: true } } } } }, orderBy: { createdAt: "desc" } });
     return NextResponse.json({ orders });
   } catch (error) {
     if (process.env.NODE_ENV !== "production") console.warn("[DalleUp orders fallback] GET /api/orders", error);
@@ -98,9 +98,10 @@ export async function POST(request: Request) {
           const unitPrice = menuItem?.price ?? 0;
           return { menuItemId: item.menuItemId, quantity: item.quantity, unitPrice, total: unitPrice * item.quantity };
         }) },
-        payment: { create: { method: paymentMethod as typeof allowedPaymentMethods[number], status: "PENDING", amount: total } }
+        payment: { create: { method: paymentMethod as typeof allowedPaymentMethods[number], status: "PENDING", amount: total } },
+        delivery: { create: { status: "PENDING", distanceKm: deliveryFee ? Math.round((deliveryFee / 200) * 10) / 10 : undefined } }
       },
-      include: { restaurant: true, items: { include: { menuItem: true } }, payment: true, address: true }
+      include: { restaurant: true, items: { include: { menuItem: true } }, payment: true, address: true, delivery: true }
     });
 
     const customer = await prisma.user.findUnique({ where: { id: session.user.id }, select: { email: true, name: true } }).catch(() => null);

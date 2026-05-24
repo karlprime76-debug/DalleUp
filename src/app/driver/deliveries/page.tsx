@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { DriverShell } from "@/components/layout/driver-shell";
+import { ButtonLink } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -38,7 +39,10 @@ export default async function DriverDeliveriesPage() {
 
   return (
     <DriverShell title="Mes livraisons" sections={driverNavSections}>
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="flex justify-end">
+        <ButtonLink href="/driver/deliveries/available" variant="secondary" size="sm">Voir les livraisons disponibles</ButtonLink>
+      </div>
+      <div className="mt-4 grid gap-4 md:grid-cols-4">
         <Card className="p-5"><p className="text-sm font-bold text-neutral-500">En attente</p><h2 className="mt-2 text-3xl font-black text-dalle-orange">{pending.length}</h2></Card>
         <Card className="p-5"><p className="text-sm font-bold text-neutral-500">En cours</p><h2 className="mt-2 text-3xl font-black text-dalle-orange">{active.length}</h2></Card>
         <Card className="p-5"><p className="text-sm font-bold text-neutral-500">Terminées</p><h2 className="mt-2 text-3xl font-black text-dalle-lime">{completed.length}</h2></Card>
@@ -58,7 +62,7 @@ export default async function DriverDeliveriesPage() {
                     {delivery.order?.note ? <p className="mt-1 text-sm font-bold text-neutral-600">{delivery.order.note}</p> : null}
                   </div>
                   <Badge variant={section.key === "completed" ? "lime" : section.key === "failed" ? "neutral" : "orange"}>{delivery.status}</Badge>
-                  <Link href={`/driver/deliveries/${delivery.orderId}`} className="rounded-2xl bg-dalle-charcoal px-4 py-2 text-center text-sm font-black text-white transition hover:bg-black">Détail</Link>
+                  <Link href={`/driver/deliveries/${delivery.id}`} className="rounded-2xl bg-dalle-charcoal px-4 py-2 text-center text-sm font-black text-white transition hover:bg-black">Détail</Link>
                 </div>
               ))}
             </div>

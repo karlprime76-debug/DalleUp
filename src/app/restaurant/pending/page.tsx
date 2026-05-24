@@ -1,25 +1,26 @@
 import Link from "next/link";
-import Image from "next/image";
-import { Clock } from "lucide-react";
+import { RestaurantShell } from "@/components/layout/restaurant-shell";
 import { Card } from "@/components/ui/card";
-import { SignOutButton } from "@/components/auth/sign-out-button";
-import { site } from "@/lib/site";
+import { restaurantNavSections } from "@/lib/navigation/restaurant-nav";
+import { requireRestaurant } from "@/lib/auth/guards";
 
-export default function RestaurantPendingPage() {
+export default async function RestaurantPendingPage() {
+  const { restaurant } = await requireRestaurant();
   return (
-    <main className="grid min-h-screen place-items-center bg-dalle-cream px-4">
-      <div className="absolute left-4 top-4"><Link href="/" aria-label="Retour à l'accueil" className="flex items-center gap-2 font-black text-dalle-charcoal"><Image src="/brand/dalleup-icon.svg" alt={`${site.name} logo`} width={36} height={36} className="rounded-2xl shadow-sm" priority /><span className="hidden sm:inline">{site.name}</span></Link></div>
+    <RestaurantShell title="En attente de validation" sections={restaurantNavSections}>
       <Card className="mx-auto max-w-lg p-8 text-center">
         <div className="mx-auto grid h-16 w-16 place-items-center rounded-3xl bg-orange-50 text-dalle-orange">
-          <Clock size={28} />
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         </div>
-        <h1 className="mt-5 text-2xl font-black text-dalle-charcoal">Votre compte restaurant est en attente de validation.</h1>
+        <h1 className="mt-5 text-2xl font-black text-dalle-charcoal">Votre restaurant est en attente de validation.</h1>
         <p className="mt-3 text-neutral-500">Votre demande est en cours de vérification. Vous recevrez une notification après validation.</p>
-        <p className="mt-2 text-sm text-neutral-400">Cela peut prendre jusqu’à 24 heures ouvrées.</p>
-        <div className="mt-6 flex justify-center">
-          <SignOutButton />
+        <p className="mt-2 text-sm text-neutral-400">Cela peut prendre jusqu&apos;à 24 heures ouvrées.</p>
+        <div className="mt-6 flex flex-col gap-3">
+          <Link href="/restaurant/dashboard" className="rounded-2xl bg-dalle-charcoal px-4 py-3 text-center text-sm font-black text-white transition hover:bg-black">Retour au tableau de bord</Link>
+          <Link href="/restaurant/onboarding" className="rounded-2xl bg-white px-4 py-3 text-center text-sm font-black text-neutral-700 ring-1 ring-black/10 transition hover:bg-neutral-50">Modifier mon profil</Link>
         </div>
+        <p className="mt-3 text-xs text-neutral-400">Restaurant : {restaurant.name}</p>
       </Card>
-    </main>
+    </RestaurantShell>
   );
 }

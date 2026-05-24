@@ -1,13 +1,13 @@
 import { RestaurantShell } from "@/components/layout/restaurant-shell";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { requireApprovedRestaurant } from "@/lib/auth/guards";
+import { requireRestaurant } from "@/lib/auth/guards";
 import { getOpsOrders } from "@/lib/data/ops";
 import { restaurantNavSections } from "@/lib/navigation/restaurant-nav";
 import { formatPrice } from "@/lib/pricing/delivery";
 
 export default async function RestaurantFinancePage() {
-  const { session } = await requireApprovedRestaurant();
+  const { session, restaurant } = await requireRestaurant();
   const orders = await getOpsOrders({ restaurantOwnerId: session.user.id });
   const deliveredOrders = orders.filter((o) => o.status === "DELIVERED");
   const revenue = deliveredOrders.reduce((sum, o) => sum + o.total, 0);
@@ -16,6 +16,7 @@ export default async function RestaurantFinancePage() {
 
   return (
     <RestaurantShell title="Finance & Solde" sections={restaurantNavSections}>
+      {restaurant.status === "PENDING" ? <div className="mb-5 rounded-2xl bg-orange-50 px-4 py-3 text-sm font-bold text-dalle-orange">Votre restaurant est en attente de validation. Les finances apparaîtront après approbation.</div> : null}
       <div className="grid gap-4 md:grid-cols-4">
         <Card className="p-5"><p className="text-sm font-bold text-neutral-500">Ventes livrées</p><h2 className="mt-2 text-3xl font-black text-dalle-orange">{deliveredOrders.length}</h2></Card>
         <Card className="p-5"><p className="text-sm font-bold text-neutral-500">Chiffre d&apos;affaires</p><h2 className="mt-2 text-3xl font-black text-dalle-orange">{formatPrice(revenue)}</h2></Card>
