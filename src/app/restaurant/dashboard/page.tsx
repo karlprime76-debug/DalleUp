@@ -109,9 +109,36 @@ export default async function RestaurantDashboardPage() {
   const deliveredOrders = orders.filter((order) => order.status === "DELIVERED");
   const revenue = orders.reduce((sum, order) => sum + order.total, 0);
   const hasProducts = menu.items.length > 0;
+  const activeProducts = menu.items.filter((item) => item.isActive).length;
+  const setupChecklist = [
+    { label: "Profil restaurant complété", done: isComplete, href: "/restaurant/onboarding" },
+    { label: "Photo de couverture ajoutée", done: Boolean(restaurant.image), href: "/restaurant/onboarding" },
+    { label: "Au moins 3 produits créés", done: menu.items.length >= 3, href: "/restaurant/menu/new" },
+    { label: "Produits disponibles à la vente", done: activeProducts > 0, href: "/restaurant/menu" },
+    { label: "Validation admin obtenue", done: restaurant.status === "APPROVED", href: "/restaurant/pending" },
+  ];
+  const completedSteps = setupChecklist.filter((item) => item.done).length;
 
   return (
     <RestaurantShell title="Tableau de bord" sections={restaurantNavSections}>
+      <Card className="mb-5 p-5">
+        <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
+          <div>
+            <p className="text-sm font-black text-dalle-orange">Mise en ligne</p>
+            <h2 className="text-2xl font-black text-dalle-charcoal">Préparez votre restaurant</h2>
+            <p className="mt-1 text-sm text-neutral-500">{completedSteps}/{setupChecklist.length} étapes complétées avant une expérience client complète.</p>
+          </div>
+          <Badge variant={restaurant.status === "APPROVED" && activeProducts > 0 ? "lime" : "orange"}>{restaurant.status === "APPROVED" && activeProducts > 0 ? "Visible côté client" : "À finaliser"}</Badge>
+        </div>
+        <div className="mt-4 grid gap-2 md:grid-cols-2">
+          {setupChecklist.map((item) => (
+            <Link key={item.label} href={item.href} className="flex items-center justify-between rounded-2xl bg-neutral-50 px-4 py-3 text-sm font-bold transition hover:bg-neutral-100">
+              <span>{item.label}</span>
+              <span className={item.done ? "text-dalle-lime" : "text-dalle-orange"}>{item.done ? "OK" : "À faire"}</span>
+            </Link>
+          ))}
+        </div>
+      </Card>
       {/* Alertes */}
       {restaurant.status === "PENDING" && (
         <Card className="mb-5 border-dashed border-dalle-orange/30 bg-orange-50/50 p-5">

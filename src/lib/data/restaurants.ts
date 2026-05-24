@@ -7,7 +7,11 @@ function warnFallback(source: string, error?: unknown) {
 
 export async function getRestaurants(): Promise<AppRestaurant[]> {
   try {
-    const restaurants = await prisma.restaurant.findMany({ include: { category: true }, orderBy: [{ isPopular: "desc" }, { rating: "desc" }] });
+    const restaurants = await prisma.restaurant.findMany({
+      where: { status: "APPROVED", menuItems: { some: { isActive: true } } },
+      include: { category: true },
+      orderBy: [{ isPopular: "desc" }, { rating: "desc" }]
+    });
     if (!restaurants.length) return [];
     return restaurants.map(mapRestaurant);
   } catch (error) {
@@ -18,7 +22,7 @@ export async function getRestaurants(): Promise<AppRestaurant[]> {
 
 export async function getPopularRestaurants(): Promise<AppRestaurant[]> {
   try {
-    const restaurants = await prisma.restaurant.findMany({ where: { isPopular: true }, include: { category: true }, orderBy: { rating: "desc" }, take: 6 });
+    const restaurants = await prisma.restaurant.findMany({ where: { isPopular: true, status: "APPROVED", menuItems: { some: { isActive: true } } }, include: { category: true }, orderBy: { rating: "desc" }, take: 6 });
     if (!restaurants.length) return [];
     return restaurants.map(mapRestaurant);
   } catch (error) {
@@ -29,7 +33,7 @@ export async function getPopularRestaurants(): Promise<AppRestaurant[]> {
 
 export async function getRestaurantById(id: string): Promise<AppRestaurant | null> {
   try {
-    const restaurant = await prisma.restaurant.findFirst({ where: { OR: [{ id }, { slug: id }] }, include: { category: true } });
+    const restaurant = await prisma.restaurant.findFirst({ where: { status: "APPROVED", menuItems: { some: { isActive: true } }, OR: [{ id }, { slug: id }] }, include: { category: true } });
     if (restaurant) return mapRestaurant(restaurant);
   } catch (error) {
     warnFallback("getRestaurantById", error);
@@ -44,7 +48,7 @@ export async function getRestaurantsByCategory(category: string): Promise<AppRes
 
 export async function getRestaurantCategories(): Promise<string[]> {
   try {
-    const categories = await prisma.restaurantCategory.findMany({ orderBy: { name: "asc" } });
+    const categories = await prisma.restaurantCategory.findMany({ where: { restaurants: { some: { status: "APPROVED", menuItems: { some: { isActive: true } } } } }, orderBy: { name: "asc" } });
     if (!categories.length) return [];
     return categories.map((category) => category.name);
   } catch (error) {
@@ -55,9 +59,9 @@ export async function getRestaurantCategories(): Promise<string[]> {
 
 export async function getMenuItemsByRestaurantId(restaurantId: string): Promise<AppMenuItem[]> {
   try {
-    const restaurant = await prisma.restaurant.findFirst({ where: { OR: [{ id: restaurantId }, { slug: restaurantId }] }, select: { id: true, slug: true } });
+    const restaurant = await prisma.restaurant.findFirst({ where: { status: "APPROVED", OR: [{ id: restaurantId }, { slug: restaurantId }] }, select: { id: true, slug: true } });
     const ids = restaurant ? [restaurant.id, restaurant.slug] : [restaurantId];
-    const items = await prisma.menuItem.findMany({ where: { restaurantId: { in: ids } }, include: { restaurant: true, category: true }, orderBy: { createdAt: "asc" } });
+    const items = await prisma.menuItem.findMany({ where: { restaurantId: { in: ids }, isActive: true }, include: { restaurant: true, category: true }, orderBy: { createdAt: "asc" } });
     if (items.length) return items.map(mapMenuItem);
   } catch (error) {
     warnFallback("getMenuItemsByRestaurantId", error);
@@ -67,7 +71,7 @@ export async function getMenuItemsByRestaurantId(restaurantId: string): Promise<
 
 export async function getTrendingMenuItems(): Promise<AppMenuItem[]> {
   try {
-    const items = await prisma.menuItem.findMany({ where: { isActive: true }, include: { restaurant: true, category: true }, orderBy: { createdAt: "desc" }, take: 8 });
+    const items = await prisma.menuItem.findMany({ where: { isActive: true, restaurant: { status: "APPROVED" } }, include: { restaurant: true, category: true }, orderBy: { createdAt: "desc" }, take: 8 });
     if (!items.length) return [];
     return items.map(mapMenuItem);
   } catch (error) {
