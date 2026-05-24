@@ -113,12 +113,11 @@ export function OrderDetailsClient({ id }: { id: string }) {
         <Card className="mt-5 p-5"><h2 className="text-xl font-black">Besoin d’aide ?</h2><p className="mt-2 text-sm text-neutral-500">En cas de problème, contactez le support avec la référence {remoteOrder.orderNumber}.</p><a className="mt-4 inline-flex rounded-2xl bg-dalle-charcoal px-5 py-3 text-sm font-black text-white" href={`mailto:support@dalleup.com?subject=Litige commande ${remoteOrder.orderNumber}`}>Signaler un problème</a></Card>
 
         {/* Carte de suivi */}
-        {(remoteOrder.address?.latitude || remoteOrder.restaurant?.latitude || driverLocation) && (
+        {(remoteOrder.address?.latitude || driverLocation) && (
           <Card className="mt-5 p-5">
             <h2 className="text-xl font-black">Suivi sur la carte</h2>
             <div className="mt-3">
               <OrderTrackingMap
-                restaurantLocation={remoteOrder.restaurant?.latitude && remoteOrder.restaurant?.longitude ? { lat: remoteOrder.restaurant.latitude, lng: remoteOrder.restaurant.longitude, label: remoteOrder.restaurant.name } : undefined}
                 customerLocation={remoteOrder.address?.latitude && remoteOrder.address?.longitude ? { lat: remoteOrder.address.latitude, lng: remoteOrder.address.longitude, label: address } : undefined}
                 driverLocation={driverLocation ? { lat: driverLocation.latitude, lng: driverLocation.longitude, label: remoteOrder.delivery?.driver?.name ?? "Livreur" } : undefined}
                 height="280px"

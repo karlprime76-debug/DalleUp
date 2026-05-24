@@ -79,7 +79,8 @@ export async function POST(request: Request) {
             address: "Non renseigné",
             phone: phone || null,
             status: "PENDING",
-          }
+          },
+          select: { id: true }
         });
       }
 

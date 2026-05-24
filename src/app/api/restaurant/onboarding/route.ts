@@ -72,7 +72,8 @@ export async function POST(request: Request) {
           minDelayMin,
           maxDelayMin,
           status: "PENDING",
-        }
+        },
+        select: { id: true }
       });
     } else {
       restaurant = await prisma.restaurant.create({
@@ -88,7 +89,8 @@ export async function POST(request: Request) {
           minDelayMin,
           maxDelayMin,
           status: "PENDING",
-        }
+        },
+        select: { id: true }
       });
     }
 

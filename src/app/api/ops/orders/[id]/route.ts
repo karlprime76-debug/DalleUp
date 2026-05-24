@@ -14,7 +14,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       where: { OR: [{ id }, { orderNumber: id }] },
       include: {
         customer: { select: { id: true, name: true, phone: true } },
-        restaurant: { select: { id: true, name: true, address: true, ownerId: true, latitude: true, longitude: true } },
+        restaurant: { select: { id: true, name: true, address: true, ownerId: true } },
         address: true,
         items: { include: { menuItem: true } },
         delivery: { include: { driver: { select: { id: true, name: true, phone: true } } } },

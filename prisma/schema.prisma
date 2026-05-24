@@ -186,8 +186,6 @@ model Restaurant {
   minDelayMin Int                @default(20)
   maxDelayMin Int                @default(40)
   isPopular   Boolean            @default(false)
-  latitude    Float?
-  longitude   Float?
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
   owner       User               @relation(fields: [ownerId], references: [id])
