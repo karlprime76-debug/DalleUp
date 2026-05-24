@@ -4,7 +4,12 @@ import { authOptions } from "@/lib/auth/config";
 import { prisma } from "@/lib/db/prisma";
 
 function slugify(name: string) {
-  return name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  return name.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "restaurant";
+}
+
+function positiveNumber(value: unknown, fallback: number) {
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.max(0, Math.round(number)) : fallback;
 }
 
 export async function GET() {
@@ -30,6 +35,11 @@ export async function POST(request: Request) {
     const name = String(body.name ?? "").trim();
     const description = String(body.description ?? "").trim();
     const address = String(body.address ?? "").trim();
+    const phone = String(body.phone ?? "").trim() || null;
+    const image = String(body.image ?? "").trim() || null;
+    const deliveryFee = positiveNumber(body.deliveryFee, 1200);
+    const minDelayMin = Math.max(1, positiveNumber(body.minDelayMin, 20));
+    const maxDelayMin = Math.max(minDelayMin, positiveNumber(body.maxDelayMin, 40));
 
     if (!name || name.length < 2) return NextResponse.json({ message: "Le nom du restaurant doit contenir au moins 2 caractères." }, { status: 400 });
     if (!description) return NextResponse.json({ message: "La description est requise." }, { status: 400 });
@@ -48,11 +58,11 @@ export async function POST(request: Request) {
           slug,
           description,
           address,
-          phone: String(body.phone ?? "").trim() || null,
-          image: String(body.image ?? "").trim() || null,
-          deliveryFee: Math.max(0, Math.round(Number(body.deliveryFee ?? 1200))),
-          minDelayMin: Math.max(1, Math.round(Number(body.minDelayMin ?? 20))),
-          maxDelayMin: Math.max(1, Math.round(Number(body.maxDelayMin ?? 40))),
+          phone,
+          image,
+          deliveryFee,
+          minDelayMin,
+          maxDelayMin,
           status: "PENDING",
         }
       });
@@ -64,25 +74,32 @@ export async function POST(request: Request) {
           slug,
           description,
           address,
-          phone: String(body.phone ?? "").trim() || null,
-          image: String(body.image ?? "").trim() || null,
-          deliveryFee: Math.max(0, Math.round(Number(body.deliveryFee ?? 1200))),
-          minDelayMin: Math.max(1, Math.round(Number(body.minDelayMin ?? 20))),
-          maxDelayMin: Math.max(1, Math.round(Number(body.maxDelayMin ?? 40))),
+          phone,
+          image,
+          deliveryFee,
+          minDelayMin,
+          maxDelayMin,
           status: "PENDING",
         }
       });
     }
 
     const defaultCategories = ["Plats", "Boissons", "Jus", "Desserts", "Accompagnements", "Sauces", "Suppléments", "Menus combo", "Autres"];
-    await prisma.menuCategory.createMany({
-      data: defaultCategories.map((catName, index) => ({ restaurantId: restaurant.id, name: catName, sortOrder: index })),
-      skipDuplicates: true,
-    });
+    try {
+      await prisma.menuCategory.createMany({
+        data: defaultCategories.map((catName, index) => ({ restaurantId: restaurant.id, name: catName, sortOrder: index })),
+        skipDuplicates: true,
+      });
+    } catch (error) {
+      console.error("[DalleUp onboarding] default categories skipped", {
+        restaurantId: restaurant.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
 
     return NextResponse.json({ restaurant });
   } catch (error) {
-    if (process.env.NODE_ENV !== "production") console.warn("[DalleUp onboarding]", error);
-    return NextResponse.json({ message: "Création impossible pour le moment." }, { status: 503 });
+    console.error("[DalleUp onboarding]", error instanceof Error ? error.message : String(error));
+    return NextResponse.json({ message: "Création impossible pour le moment. Vérifiez les champs puis réessayez." }, { status: 503 });
   }
 }

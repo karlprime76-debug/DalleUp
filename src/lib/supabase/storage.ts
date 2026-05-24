@@ -11,11 +11,11 @@ export async function uploadRestaurantImage(
   try {
     const supabase = createClient();
     const { data, error } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: true });
-    if (error) return { url: "", error: error.message };
+    if (error) return { url: "", error: "Image non envoyée. Vous pourrez l’ajouter plus tard." };
     const { data: publicUrl } = supabase.storage.from(BUCKET).getPublicUrl(data?.path ?? path);
     return { url: publicUrl.publicUrl };
   } catch {
-    return { url: "", error: "Upload failed" };
+    return { url: "", error: "Image non envoyée. Vous pourrez l’ajouter plus tard." };
   }
 }
 

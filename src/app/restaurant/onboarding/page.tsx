@@ -24,6 +24,7 @@ export default function RestaurantOnboardingPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [initial, setInitial] = useState<RestaurantData>({ name: "", description: "", address: "", phone: "", image: "", deliveryFee: 1200, minDelayMin: 20, maxDelayMin: 40 });
   const [imageUrl, setImageUrl] = useState("");
   const { upload, uploading, error: uploadError } = useImageUpload();
@@ -56,11 +57,13 @@ export default function RestaurantOnboardingPage() {
       setError("Choisissez une image valide.");
       return;
     }
+    setError(null);
+    setNotice(null);
     const extension = file.name.split(".").pop() || "jpg";
     const safeName = `cover-${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
     const result = await upload(file, `restaurants/covers/${safeName}`);
     if (result.url) setImageUrl(result.url);
-    if (result.error) setError(result.error);
+    if (result.error) setNotice(result.error);
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -111,7 +114,8 @@ export default function RestaurantOnboardingPage() {
           <p className="mt-3 text-neutral-500">Complétez les informations de votre établissement pour commencer à recevoir des commandes.</p>
 
           {error ? <div className="mt-5 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">{error}</div> : null}
-          {uploadError ? <div className="mt-5 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">{uploadError}</div> : null}
+          {notice ? <div className="mt-5 rounded-2xl bg-orange-50 px-4 py-3 text-sm font-bold text-dalle-orange">{notice}</div> : null}
+          {uploadError ? <div className="mt-5 rounded-2xl bg-orange-50 px-4 py-3 text-sm font-bold text-dalle-orange">{uploadError}</div> : null}
 
           <form onSubmit={handleSubmit} className="mt-6 grid gap-4" key={initial.name}>
             <div className="grid gap-4 md:grid-cols-2">
