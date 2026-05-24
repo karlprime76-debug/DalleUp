@@ -87,7 +87,8 @@ export default function RestaurantOnboardingPage() {
       const res = await fetch("/api/restaurant/onboarding", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        setError(data?.message ?? "Erreur lors de la mise à jour.");
+        const detail = data?.error && data?.code ? `(${data.code}) ${data.error}` : "";
+        setError((data?.message ?? "Erreur lors de la mise à jour.") + (detail ? ` ${detail}` : ""));
         setLoading(false);
         return;
       }

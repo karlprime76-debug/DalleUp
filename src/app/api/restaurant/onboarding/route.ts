@@ -32,6 +32,9 @@ export async function POST(request: Request) {
     if (session.user.role !== "RESTAURANT") return NextResponse.json({ message: "Accès restaurant requis." }, { status: 403 });
 
     const body = await request.json();
+    if (process.env.NODE_ENV !== "production") {
+      console.log("[DalleUp onboarding] body", JSON.stringify(body));
+    }
     const name = String(body.name ?? "").trim();
     const description = String(body.description ?? "").trim();
     const address = String(body.address ?? "").trim();
@@ -99,7 +102,13 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ restaurant });
   } catch (error) {
-    console.error("[DalleUp onboarding]", error instanceof Error ? error.message : String(error));
-    return NextResponse.json({ message: "Création impossible pour le moment. Vérifiez les champs puis réessayez." }, { status: 503 });
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorCode = (error as { code?: string }).code ?? "UNKNOWN";
+    console.error("[DalleUp onboarding] FAILED", { message: errorMessage, code: errorCode, env: process.env.NODE_ENV });
+    return NextResponse.json({
+      message: "Création impossible pour le moment. Vérifiez les champs puis réessayez.",
+      error: process.env.NODE_ENV !== "production" ? errorMessage : undefined,
+      code: process.env.NODE_ENV !== "production" ? errorCode : undefined,
+    }, { status: 503 });
   }
 }
