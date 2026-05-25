@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/db/prisma";
-import { drivers as mockDrivers, orders as mockOrders, restaurants as mockRestaurants, stats as mockStats } from "@/lib/mock-data";
 
 export type OpsOrder = {
   dbId?: string;
@@ -66,10 +65,6 @@ function warnFallback(source: string, error?: unknown) {
   if (process.env.NODE_ENV !== "production") console.warn(`[DalleUp ops fallback] ${source}`, error);
 }
 
-function mockOpsOrders(): OpsOrder[] {
-  return mockOrders.map((order) => ({ ...order, dbId: undefined, items: [] }));
-}
-
 export async function getOpsOrders(scope?: { restaurantOwnerId?: string; driverId?: string; page?: number; limit?: number }): Promise<OpsOrder[]> {
   try {
     const page = Math.max(1, scope?.page ?? 1);
@@ -81,7 +76,7 @@ export async function getOpsOrders(scope?: { restaurantOwnerId?: string; driverI
       skip: (page - 1) * limit,
       take: limit,
     });
-    if (!orders.length) return scope?.restaurantOwnerId || scope?.driverId ? [] : mockOpsOrders();
+    if (!orders.length) return [];
     return orders.map((order) => ({
       dbId: order.id,
       id: order.orderNumber,
@@ -99,7 +94,7 @@ export async function getOpsOrders(scope?: { restaurantOwnerId?: string; driverI
     }));
   } catch (error) {
     warnFallback("getOpsOrders", error);
-    return scope?.restaurantOwnerId || scope?.driverId ? [] : mockOpsOrders();
+    return [];
   }
 }
 
@@ -108,11 +103,11 @@ export async function getOpsRestaurants(page?: number, limit?: number): Promise<
     const safePage = Math.max(1, page ?? 1);
     const safeLimit = Math.min(100, Math.max(1, limit ?? 20));
     const restaurants = await prisma.restaurant.findMany({ include: { owner: true, _count: { select: { orders: true, menuItems: true } } }, orderBy: { createdAt: "desc" }, skip: (safePage - 1) * safeLimit, take: safeLimit });
-    if (!restaurants.length) return mockRestaurants.map((restaurant) => ({ id: restaurant.id, name: restaurant.name, owner: "Démo DalleUp", phone: "—", address: "Cotonou", status: "APPROVED", rating: restaurant.rating, orders: mockOrders.filter((order) => order.restaurant === restaurant.name).length, menuItems: 0, isMock: true }));
+    if (!restaurants.length) return [];
     return restaurants.map((restaurant) => ({ id: restaurant.slug, dbId: restaurant.id, ownerId: restaurant.ownerId, name: restaurant.name, owner: restaurant.owner.name, phone: restaurant.phone ?? "—", address: restaurant.address, status: restaurant.status, rating: restaurant.rating, orders: restaurant._count.orders, menuItems: restaurant._count.menuItems }));
   } catch (error) {
     warnFallback("getOpsRestaurants", error);
-    return mockRestaurants.map((restaurant) => ({ id: restaurant.id, name: restaurant.name, owner: "Démo DalleUp", phone: "—", address: "Cotonou", status: "APPROVED", rating: restaurant.rating, orders: mockOrders.filter((order) => order.restaurant === restaurant.name).length, menuItems: 0, isMock: true }));
+    return [];
   }
 }
 
@@ -121,11 +116,11 @@ export async function getOpsDrivers(page?: number, limit?: number): Promise<OpsD
     const safePage = Math.max(1, page ?? 1);
     const safeLimit = Math.min(100, Math.max(1, limit ?? 20));
     const drivers = await prisma.user.findMany({ where: { role: "DELIVERY_DRIVER" }, include: { _count: { select: { deliveries: true } } }, skip: (safePage - 1) * safeLimit, take: safeLimit });
-    if (!drivers.length) return mockDrivers.map((driver) => ({ ...driver, email: "demo@dalleup.test", phone: "—", isMock: true }));
+    if (!drivers.length) return [];
     return drivers.map((driver) => ({ id: driver.id, dbId: driver.id, name: driver.name, email: driver.email, phone: driver.phone ?? "—", status: driver.driverStatus ?? "PENDING", deliveries: driver._count.deliveries, earnings: driver._count.deliveries * 2500 }));
   } catch (error) {
     warnFallback("getOpsDrivers", error);
-    return mockDrivers.map((driver) => ({ ...driver, email: "demo@dalleup.test", phone: "—", isMock: true }));
+    return [];
   }
 }
 
@@ -134,17 +129,11 @@ export async function getOpsUsers(page?: number, limit?: number): Promise<OpsUse
     const safePage = Math.max(1, page ?? 1);
     const safeLimit = Math.min(100, Math.max(1, limit ?? 40));
     const users = await prisma.user.findMany({ orderBy: { createdAt: "desc" }, skip: (safePage - 1) * safeLimit, take: safeLimit });
-    if (!users.length) return [
-      { id: "demo-admin", name: "Admin DalleUp", email: "admin@dalleup.test", phone: "—", role: "ADMIN", driverStatus: "—", createdAt: "Démo" },
-      { id: "demo-client", name: "Client DalleUp", email: "client@dalleup.test", phone: "—", role: "CLIENT", driverStatus: "—", createdAt: "Démo" }
-    ];
+    if (!users.length) return [];
     return users.map((user) => ({ id: user.id, name: user.name, email: user.email, phone: user.phone ?? "—", role: user.role, driverStatus: user.driverStatus ?? "—", createdAt: user.createdAt.toLocaleDateString("fr-FR") }));
   } catch (error) {
     warnFallback("getOpsUsers", error);
-    return [
-      { id: "demo-admin", name: "Admin DalleUp", email: "admin@dalleup.test", phone: "—", role: "ADMIN", driverStatus: "—", createdAt: "Démo" },
-      { id: "demo-client", name: "Client DalleUp", email: "client@dalleup.test", phone: "—", role: "CLIENT", driverStatus: "—", createdAt: "Démo" }
-    ];
+    return [];
   }
 }
 
@@ -156,11 +145,11 @@ export async function getOpsStats(): Promise<OpsStats> {
       prisma.user.count({ where: { role: "DELIVERY_DRIVER" } }),
       prisma.order.aggregate({ _sum: { total: true } })
     ]);
-    if (!ordersCount && !restaurantsCount) return mockStats;
+    if (!ordersCount && !restaurantsCount) return { revenue: 0, orders: 0, restaurants: 0, drivers: driversCount, commission: 0 };
     const totalRevenue = revenue._sum.total ?? 0;
     return { revenue: totalRevenue, orders: ordersCount, restaurants: restaurantsCount, drivers: driversCount, commission: Math.round(totalRevenue * 0.15) };
   } catch (error) {
     warnFallback("getOpsStats", error);
-    return mockStats;
+    return { revenue: 0, orders: 0, restaurants: 0, drivers: 0, commission: 0 };
   }
 }

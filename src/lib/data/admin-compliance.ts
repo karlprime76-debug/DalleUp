@@ -8,8 +8,8 @@ function warnFallback(source: string, error?: unknown) {
   if (process.env.NODE_ENV !== "production") console.warn(`[DalleUp compliance fallback] ${source}`, error);
 }
 
-function mockComplianceData(): AdminComplianceData {
-  return { auditCount: 2, sensitiveActions7d: 2, financialExports: 1, notificationExports: 0, pendingNotifications: 1, failedNotifications: 0, recentActions: [{ id: "mock-compliance-action-1", action: "FINANCIAL_REPORT_EXPORTED", actor: "Admin Démo", target: "Export financier", createdAt: "Démo", isMock: true }, { id: "mock-compliance-action-2", action: "INVOICE_STATUS_UPDATED", actor: "Admin Démo", target: "Facture démo", createdAt: "Démo", isMock: true }], issues: [{ id: "mock-compliance-issue-1", title: "Migration audit/notifications non appliquée", detail: "Les données affichées peuvent provenir du fallback mock tant que la migration n'est pas exécutée.", severity: "medium", createdAt: "Démo", isMock: true }], isMock: true };
+function emptyComplianceData(): AdminComplianceData {
+  return { auditCount: 0, sensitiveActions7d: 0, financialExports: 0, notificationExports: 0, pendingNotifications: 0, failedNotifications: 0, recentActions: [], issues: [] };
 }
 
 export async function getAdminComplianceData(): Promise<AdminComplianceData> {
@@ -21,7 +21,7 @@ export async function getAdminComplianceData(): Promise<AdminComplianceData> {
       prisma.billingNotification.findMany({ where: { status: "PENDING" }, include: { restaurant: true }, orderBy: { createdAt: "desc" }, take: 10 }),
       prisma.billingNotification.findMany({ where: { status: "FAILED" }, include: { restaurant: true }, orderBy: { createdAt: "desc" }, take: 10 })
     ]);
-    if (!auditLogs.length && !pendingNotifications.length && !failedNotifications.length) return mockComplianceData();
+    if (!auditLogs.length && !pendingNotifications.length && !failedNotifications.length) return emptyComplianceData();
     const sensitiveActions7d = auditLogs.filter((log) => log.createdAt >= since).length;
     const financialExports = auditLogs.filter((log) => log.action === "FINANCIAL_REPORT_EXPORTED").length;
     const notificationExports = auditLogs.filter((log) => log.action === "BILLING_NOTIFICATIONS_EXPORTED").length;
@@ -30,6 +30,6 @@ export async function getAdminComplianceData(): Promise<AdminComplianceData> {
     return { auditCount: auditLogs.length, sensitiveActions7d, financialExports, notificationExports, pendingNotifications: pendingNotifications.length, failedNotifications: failedNotifications.length, recentActions, issues };
   } catch (error) {
     warnFallback("getAdminComplianceData", error);
-    return mockComplianceData();
+    return emptyComplianceData();
   }
 }

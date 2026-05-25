@@ -21,8 +21,8 @@ export function LoginForm() {
     setError(null);
     const formData = new FormData(event.currentTarget);
     const result = await signIn("credentials", { email: String(formData.get("email")), password: String(formData.get("password")), redirect: false });
-    setLoading(false);
     if (result?.error) {
+      setLoading(false);
       setError("Email ou mot de passe incorrect.");
       return;
     }

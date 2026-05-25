@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/db/prisma";
-import { orders as mockOrders, restaurants as mockRestaurants, stats as mockStats } from "@/lib/mock-data";
 
 export type AdminPayment = { id: string; orderNumber: string; restaurant: string; customer: string; method: string; status: string; amount: number; commission: number; providerRef: string; paidAt: string; isMock?: boolean };
 export type AdminBillingPlan = { id: string; restaurant: string; status: string; plan: string; subscriptionStatus: string; invoices: number; monthlyFee: number; commissionRate: number; orders: number; revenue: number; isMock?: boolean };
@@ -13,20 +12,11 @@ function warnFallback(source: string, error?: unknown) {
   if (process.env.NODE_ENV !== "production") console.warn(`[DalleUp billing fallback] ${source}`, error);
 }
 
-function mockBillingData(): AdminBillingData {
-  const payments = mockOrders.map((order) => ({ id: order.id, orderNumber: order.id, restaurant: order.restaurant, customer: order.customer, method: "CASH_ON_DELIVERY", status: order.status === "DELIVERED" ? "PAID" : "PENDING", amount: order.total, commission: Math.round(order.total * 0.15), providerRef: "Démo", paidAt: "Démo", isMock: true }));
-  const plans = mockRestaurants.map((restaurant) => {
-    const restaurantOrders = mockOrders.filter((order) => order.restaurant === restaurant.name);
-    const revenue = restaurantOrders.reduce((sum, order) => sum + order.total, 0);
-    return { id: restaurant.id, restaurant: restaurant.name, status: "APPROVED", plan: restaurant.popular ? "Premium" : "Starter", subscriptionStatus: "ACTIVE", invoices: 1, monthlyFee: restaurant.popular ? 15000 : 0, commissionRate: restaurant.popular ? 12 : 15, orders: restaurantOrders.length, revenue, isMock: true };
-  });
-  const invoices = plans.map((plan) => ({ id: `mock-${plan.id}`, number: `INV-${plan.id}-DEMO`, restaurant: plan.restaurant, status: "OPEN", amount: plan.monthlyFee, commission: 0, dueAt: "Démo", paidAt: "Non payé", isMock: true }));
-  const paid = payments.filter((payment) => payment.status === "PAID").reduce((sum, payment) => sum + payment.amount, 0);
-  const pending = payments.filter((payment) => payment.status === "PENDING").reduce((sum, payment) => sum + payment.amount, 0);
-  const invoiceOpen = invoices.reduce((sum, invoice) => sum + invoice.amount, 0);
-  const report = [{ month: "Démo", status: "OPEN", orderRevenue: paid, orderCommission: mockStats.commission, invoiceAmount: invoiceOpen, invoiceCommission: 0, estimatedCommission: mockStats.commission }];
-  const analytics = buildAnalytics(payments, plans, invoices);
-  return { summary: { revenue: mockStats.revenue, commission: mockStats.commission, paid, pending, failed: 0, refunded: 0, invoiceOpen, invoicePaid: 0, invoiceUncollectible: 0 }, payments, plans, invoices, report, analytics, isMock: true };
+function emptyBillingData(): AdminBillingData {
+  const payments: AdminPayment[] = [];
+  const plans: AdminBillingPlan[] = [];
+  const invoices: AdminInvoice[] = [];
+  return { summary: { revenue: 0, commission: 0, paid: 0, pending: 0, failed: 0, refunded: 0, invoiceOpen: 0, invoicePaid: 0, invoiceUncollectible: 0 }, payments, plans, invoices, report: [], analytics: buildAnalytics(payments, plans, invoices) };
 }
 
 function buildAnalytics(payments: AdminPayment[], plans: AdminBillingPlan[], invoices: AdminInvoice[]): AdminBillingAnalytics {
@@ -48,7 +38,7 @@ export async function getAdminBillingData(): Promise<AdminBillingData> {
       prisma.restaurantSubscription.findMany({ include: { plan: true, restaurant: true, invoices: true }, orderBy: { createdAt: "desc" }, take: 30 }),
       prisma.invoice.findMany({ include: { restaurant: true }, orderBy: { createdAt: "desc" }, take: 40 })
     ]);
-    if (!payments.length && !restaurants.length && !subscriptions.length && !invoices.length) return mockBillingData();
+    if (!payments.length && !restaurants.length && !subscriptions.length && !invoices.length) return emptyBillingData();
     const formattedPayments = payments.map((payment) => ({ id: payment.id, orderNumber: payment.order.orderNumber, restaurant: payment.order.restaurant.name, customer: payment.order.customer.name, method: payment.method, status: payment.status, amount: payment.amount, commission: Math.round(payment.amount * 0.15), providerRef: payment.providerRef ?? "—", paidAt: payment.paidAt?.toLocaleString("fr-FR") ?? "Non payé" }));
     const plans = restaurants.map((restaurant) => {
       const restaurantRevenue = restaurant.orders.reduce((sum, order) => sum + order.total, 0);
@@ -95,7 +85,7 @@ export async function getAdminBillingData(): Promise<AdminBillingData> {
     return { summary: { revenue: totalRevenue, commission: Math.round(totalRevenue * 0.15), paid, pending, failed, refunded, invoiceOpen, invoicePaid, invoiceUncollectible }, payments: formattedPayments, plans, invoices: formattedInvoices, report, analytics };
   } catch (error) {
     warnFallback("getAdminBillingData", error);
-    return mockBillingData();
+    return emptyBillingData();
   }
 }
 

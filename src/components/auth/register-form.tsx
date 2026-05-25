@@ -70,8 +70,7 @@ export function RegisterForm({ role = "CLIENT" }: { role?: "CLIENT" | "RESTAURAN
         setError(payload?.message ?? "Inscription impossible.");
         return;
       }
-      setMessage("Compte créé avec succès. Connectez-vous pour continuer.");
-      window.setTimeout(() => router.push("/login"), 900);
+      router.push("/login");
     } catch {
       setLoading(false);
       setError("Inscription impossible pour le moment. Réessaie dans quelques instants.");
