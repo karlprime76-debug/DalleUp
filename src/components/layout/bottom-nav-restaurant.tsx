@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, ReceiptText, CookingPot, Settings, Wallet } from "lucide-react";
+import { useMobileDrawer } from "@/hooks/use-mobile-drawer";
 
 const items = [
   { href: "/restaurant/dashboard", label: "Dashboard", icon: Home },
@@ -14,8 +15,10 @@ const items = [
 
 export function BottomNavRestaurant() {
   const pathname = usePathname();
+  const { isOpen } = useMobileDrawer();
+  if (isOpen) return null;
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 bg-transparent px-2 pb-2 md:hidden" style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}>
+    <nav className="fixed inset-x-0 bottom-0 z-40 bg-transparent px-2 pb-2 md:hidden" style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}>
       <div className="grid grid-cols-5 gap-1 rounded-2xl border border-black/10 bg-white/95 p-1.5 shadow-2xl backdrop-blur-xl">
         {items.map((item) => {
           const Icon = item.icon;

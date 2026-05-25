@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogOut, Menu, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { signOut } from "next-auth/react";
 import type { ReactNode } from "react";
 import { site } from "@/lib/site";
+import { useMobileDrawer } from "@/hooks/use-mobile-drawer";
 
 export type NavSection = { title: string; items: { href: string; label: string }[] };
 
@@ -25,7 +26,7 @@ export function DashboardShell({
   logoHref?: string;
   publicHref?: string;
 }) {
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const { isOpen: mobileOpen, setIsOpen: setMobileOpen } = useMobileDrawer();
   const pathname = usePathname();
   const allItems = sections ? sections.flatMap((s) => s.items) : nav ?? [];
 
@@ -41,7 +42,7 @@ export function DashboardShell({
       document.body.style.overflow = originalOverflow;
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [mobileOpen]);
+  }, [mobileOpen, setMobileOpen]);
 
   const renderLink = (item: { href: string; label: string }) => {
     const active = pathname === item.href || pathname.startsWith(item.href + "/");
@@ -85,7 +86,7 @@ export function DashboardShell({
       </aside>
 
       {/* Topbar mobile */}
-      <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-black/5 bg-white/90 px-4 py-3 backdrop-blur-xl lg:hidden">
+      <div className="sticky top-0 z-20 flex items-center gap-3 border-b border-black/5 bg-white/90 px-4 py-3 backdrop-blur-xl lg:hidden">
         <button type="button" onClick={() => setMobileOpen(true)} aria-label="Ouvrir le menu de navigation" className="grid h-10 w-10 place-items-center rounded-2xl bg-neutral-100 transition hover:bg-neutral-200">
           <Menu size={20} className="text-dalle-charcoal" />
         </button>
@@ -94,12 +95,12 @@ export function DashboardShell({
 
       {/* Mobile drawer */}
       <div
-        className={`fixed inset-0 lg:hidden ${mobileOpen ? "pointer-events-auto" : "pointer-events-none"}`}
+        className={`fixed inset-0 z-50 lg:hidden ${mobileOpen ? "pointer-events-auto" : "pointer-events-none"}`}
         aria-hidden={!mobileOpen}
       >
         {/* Overlay */}
         <div
-          className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${mobileOpen ? "opacity-100" : "opacity-0"}`}
+          className={`fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${mobileOpen ? "opacity-100" : "opacity-0"}`}
           onClick={() => setMobileOpen(false)}
           aria-label="Fermer le menu"
           role="button"
@@ -107,7 +108,7 @@ export function DashboardShell({
         />
         {/* Panel */}
         <div
-          className={`absolute left-0 top-0 h-full w-[82vw] max-w-[320px] bg-dalle-charcoal p-5 text-white shadow-2xl transition-transform duration-300 ease-out ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
+          className={`fixed left-0 top-0 z-[60] h-dvh w-[82vw] max-w-[340px] bg-dalle-charcoal p-5 text-white shadow-2xl transition-transform duration-300 ease-out ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
         >
           <div className="flex items-center justify-between">
             <Link href={logoHref} onClick={() => setMobileOpen(false)} className="text-xl font-black text-dalle-orange">{site.name}</Link>

@@ -29,7 +29,7 @@ export function NotificationBell() {
       </button>
 
       {open ? (
-        <div className="absolute right-0 z-50 mt-2 w-80 rounded-2xl border border-neutral-100 bg-white p-3 shadow-lg">
+        <div className="absolute right-0 z-40 mt-2 w-80 rounded-2xl border border-neutral-100 bg-white p-3 shadow-lg">
           <div className="mb-2 flex items-center justify-between">
             <p className="text-sm font-black text-dalle-charcoal">Notifications</p>
             {unread > 0 ? (

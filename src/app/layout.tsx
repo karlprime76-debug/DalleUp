@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { MobileDrawerProvider } from "@/hooks/use-mobile-drawer";
 import { ServiceWorkerRegister } from "@/components/notifications/service-worker-register";
 import { site } from "@/lib/site";
 
@@ -32,8 +33,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="fr">
       <body>
-        <ServiceWorkerRegister />
-        {children}
+        <MobileDrawerProvider>
+          <ServiceWorkerRegister />
+          {children}
+        </MobileDrawerProvider>
       </body>
     </html>
   );

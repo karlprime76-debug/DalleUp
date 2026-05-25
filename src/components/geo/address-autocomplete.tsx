@@ -88,7 +88,7 @@ export function AddressAutocomplete({ onSelect, placeholder = "Où souhaitez-vou
         />
       </div>
       {open && (
-        <Card className="absolute z-50 mt-1 w-full max-w-xl overflow-hidden border shadow-lg">
+        <Card className="absolute z-40 mt-1 w-full max-w-xl overflow-hidden border shadow-lg">
           {loading ? (
             <div className="flex items-center gap-2 px-4 py-3 text-sm text-neutral-500">
               <Loader2 size={16} className="animate-spin" />
