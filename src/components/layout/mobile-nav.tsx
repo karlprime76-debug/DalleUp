@@ -2,10 +2,25 @@
 
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export function MobileNav({ items }: { items: { href: string; label: string }[] }) {
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
   return (
     <div className="md:hidden">
       <button
@@ -16,8 +31,21 @@ export function MobileNav({ items }: { items: { href: string; label: string }[] 
       >
         {open ? <X size={20} /> : <Menu size={20} />}
       </button>
-      {open ? (
-        <div className="absolute inset-x-0 top-full border-b border-black/5 bg-white/95 px-4 py-4 shadow-lg backdrop-blur-xl">
+
+      <div
+        className={`fixed inset-0 ${open ? "pointer-events-auto" : "pointer-events-none"}`}
+        aria-hidden={!open}
+      >
+        <div
+          className={`absolute inset-0 bg-black/30 transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0"}`}
+          onClick={() => setOpen(false)}
+          aria-label="Fermer le menu"
+          role="button"
+          tabIndex={open ? 0 : -1}
+        />
+        <div
+          className={`absolute inset-x-0 top-14 border-b border-black/5 bg-white/95 px-4 py-4 shadow-lg backdrop-blur-xl transition-transform duration-300 ${open ? "translate-y-0" : "-translate-y-full"}`}
+        >
           <nav className="grid gap-2">
             {items.map((item) => (
               <Link
@@ -31,7 +59,7 @@ export function MobileNav({ items }: { items: { href: string; label: string }[] 
             ))}
           </nav>
         </div>
-      ) : null}
+      </div>
     </div>
   );
 }
