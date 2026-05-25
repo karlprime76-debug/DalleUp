@@ -303,7 +303,7 @@ export async function createContractSignedUrl(path: string): Promise<SignedUrlRe
 async function createSignedUrl(bucket: string, path: string): Promise<SignedUrlResult> {
   try {
     const supabase = createServerClient();
-    const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 60 * 60);
+    const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 15 * 60);
     if (error) return { error: error.message };
     return { url: data.signedUrl };
   } catch {

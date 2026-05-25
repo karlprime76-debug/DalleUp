@@ -1,3 +1,4 @@
+import { randomBytes } from "crypto";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth/config";
@@ -18,7 +19,9 @@ type OrderItemInput = {
 const allowedPaymentMethods = ["CASH_ON_DELIVERY", "MTN_MOMO", "MOOV_MONEY", "CARD"] as const;
 
 function orderNumber() {
-  return `DU-${String(Date.now()).slice(-6)}`;
+  const ts = Date.now().toString(36).toUpperCase();
+  const rand = randomBytes(2).toString("hex").toUpperCase();
+  return `DU-${ts}-${rand}`;
 }
 
 export async function GET(request: Request) {

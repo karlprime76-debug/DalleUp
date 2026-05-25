@@ -10,7 +10,9 @@ function generateToken(): string {
 }
 
 function getAppUrl(): string {
-  return process.env.APP_URL || process.env.NEXTAUTH_URL || "https://dalleup.vercel.app";
+  const url = process.env.APP_URL || process.env.NEXTAUTH_URL;
+  if (!url) throw new Error("APP_URL ou NEXTAUTH_URL doit être défini dans les variables d'environnement.");
+  return url;
 }
 
 export async function POST(request: Request) {
@@ -42,6 +44,7 @@ export async function POST(request: Request) {
     const token = generateToken();
     const expires = new Date(Date.now() + 30 * 60 * 1000);
 
+    await prisma.verificationToken.deleteMany({ where: { expires: { lt: new Date() } } });
     await prisma.verificationToken.create({
       data: {
         identifier: `reset:${email}`,

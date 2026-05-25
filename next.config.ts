@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "images.unsplash.com"
       }
+      // TODO: ajouter le hostname Supabase Storage ici, ex: { protocol: "https", hostname: "xxxx.supabase.co" }
     ]
   },
   async headers() {
