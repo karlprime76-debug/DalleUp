@@ -21,15 +21,22 @@ function orderNumber() {
   return `DU-${String(Date.now()).slice(-6)}`;
 }
 
-function serializeOrder(order: Awaited<ReturnType<typeof prisma.order.findFirstOrThrow>>) {
-  return order;
-}
-
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return NextResponse.json({ message: "Non connecté." }, { status: 401 });
-    const orders = await prisma.order.findMany({ where: { customerId: session.user.id }, include: { restaurant: true, items: { include: { menuItem: true } }, payment: true, address: true, delivery: { include: { driver: { select: { name: true } } } } }, orderBy: { createdAt: "desc" } });
+
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(1, Number(searchParams.get("page") ?? 1));
+    const limit = Math.min(100, Math.max(1, Number(searchParams.get("limit") ?? 20)));
+
+    const orders = await prisma.order.findMany({
+      where: { customerId: session.user.id },
+      include: { restaurant: true, items: { include: { menuItem: true } }, payment: true, address: true, delivery: { include: { driver: { select: { name: true } } } } },
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
     return NextResponse.json({ orders });
   } catch (error) {
     if (process.env.NODE_ENV !== "production") console.warn("[DalleUp orders fallback] GET /api/orders", error);
@@ -125,7 +132,7 @@ export async function POST(request: Request) {
       /* L'email ne bloque pas la commande */
     }
 
-    return NextResponse.json({ order: serializeOrder(order) }, { status: 201 });
+    return NextResponse.json({ order }, { status: 201 });
   } catch (error) {
     if (process.env.NODE_ENV !== "production") console.warn("[DalleUp orders fallback] POST /api/orders", error);
     return NextResponse.json({ message: "Création Prisma indisponible." }, { status: 503 });

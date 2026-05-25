@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { requireAdminApi } from "@/lib/auth/guards";
 import { getBillingNotifications } from "@/lib/data/billing-notifications";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const admin = await requireAdminApi();
+    const admin = await requireAdminApi(request);
     if ("response" in admin) return admin.response;
     const notifications = await getBillingNotifications();
     return NextResponse.json({ notifications });

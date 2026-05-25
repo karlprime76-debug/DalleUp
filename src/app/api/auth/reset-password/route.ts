@@ -1,11 +1,20 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db/prisma";
+import { rateLimitRequest } from "@/lib/rate-limit";
 import { sendEmail } from "@/lib/email/send-email";
 import { passwordResetSuccess } from "@/lib/email/templates";
 
 export async function POST(request: Request) {
   try {
+    const limit = rateLimitRequest(request, "/api/auth/reset-password");
+    if (!limit.ok) {
+      return NextResponse.json(
+        { message: "Trop de tentatives. Réessayez plus tard." },
+        { status: 429, headers: { "Retry-After": String(limit.retryAfter ?? 60) } }
+      );
+    }
+
     const body = await request.json();
     const email = String(body.email ?? "").trim().toLowerCase();
     const token = String(body.token ?? "").trim();

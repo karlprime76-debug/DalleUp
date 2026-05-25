@@ -19,7 +19,7 @@ function toCsv(headers: string[], rows: CsvRow[]) {
 
 export async function GET(request: Request) {
   try {
-    const admin = await requireAdminApi();
+    const admin = await requireAdminApi(request);
     if ("response" in admin) return admin.response;
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") || "ALL";

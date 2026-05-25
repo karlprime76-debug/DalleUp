@@ -9,7 +9,7 @@ const statuses: InvoiceStatus[] = [InvoiceStatus.PAID, InvoiceStatus.VOID, Invoi
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const admin = await requireAdminApi();
+    const admin = await requireAdminApi(request);
     if ("response" in admin) return admin.response;
     const { id } = await params;
     const body = await request.json();

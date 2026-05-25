@@ -7,7 +7,7 @@ const allowedStatuses = ["PENDING", "APPROVED", "SUSPENDED", "CLOSED"] as const;
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const admin = await requireAdminApi();
+    const admin = await requireAdminApi(request);
     if ("response" in admin) return admin.response;
     const { id } = await params;
     const body = await request.json();

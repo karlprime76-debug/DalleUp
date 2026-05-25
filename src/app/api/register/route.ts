@@ -15,14 +15,6 @@ function getClientIp(request: Request): string {
   return "unknown";
 }
 
-function getEmailDomain(email: string): string | null {
-  try {
-    return email.split("@")[1] ?? null;
-  } catch {
-    return null;
-  }
-}
-
 export async function POST(request: Request) {
   let email = "";
   let requestedRole = "CLIENT";
@@ -44,8 +36,6 @@ export async function POST(request: Request) {
     const confirmPassword = String(body.confirmPassword ?? "");
     requestedRole = String(body.role ?? "CLIENT");
 
-    if (process.env.NODE_ENV !== "production") console.info("[DalleUp register] received", { email, role: requestedRole });
-
     if (!name || !email || !password || !confirmPassword) return NextResponse.json({ message: "Tous les champs obligatoires doivent être remplis." }, { status: 400 });
     if (name.length < 2) return NextResponse.json({ message: "Le nom doit contenir au moins 2 caractères." }, { status: 400 });
     if (!emailRegex.test(email)) return NextResponse.json({ message: "Adresse email invalide." }, { status: 400 });
@@ -53,10 +43,7 @@ export async function POST(request: Request) {
     if (password !== confirmPassword) return NextResponse.json({ message: "Les mots de passe ne correspondent pas." }, { status: 400 });
     if (!allowedPublicRoles.includes(requestedRole as typeof allowedPublicRoles[number])) return NextResponse.json({ message: "Type de compte invalide." }, { status: 400 });
 
-    if (process.env.NODE_ENV !== "production") console.info("[DalleUp register] validation ok", { email, role: requestedRole });
-
     const existing = await prisma.user.findUnique({ where: { email } });
-    if (process.env.NODE_ENV !== "production") console.info("[DalleUp register] existing user", { email, exists: Boolean(existing) });
     if (existing) return NextResponse.json({ message: "Cet email est déjà utilisé." }, { status: 409 });
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -92,23 +79,17 @@ export async function POST(request: Request) {
     const code = getPrismaErrorCode(error);
     const name = getErrorName(error);
     const detail = sanitizeErrorMessage(error);
-    const domain = getEmailDomain(email);
 
     if (process.env.NODE_ENV !== "production") {
       console.error("[DalleUp register] failed", {
         step: "register-failed",
-        role: requestedRole,
-        domain,
         name,
         code,
         detail,
-        env: process.env.NODE_ENV,
       });
     } else {
       console.error("[DalleUp register] failed", {
         step: "register-failed",
-        role: requestedRole,
-        domain,
         name,
         code,
       });

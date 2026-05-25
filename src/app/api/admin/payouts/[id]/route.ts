@@ -1,16 +1,13 @@
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "@/lib/auth/config";
+import { requireAdminApi } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { sendEmail } from "@/lib/email/send-email";
 import { formatPrice } from "@/lib/pricing/delivery";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id || session.user.role !== "ADMIN") {
-      return NextResponse.json({ message: "Accès refusé." }, { status: 403 });
-    }
+    const admin = await requireAdminApi(request);
+    if ("response" in admin) return admin.response;
 
     const { id } = await params;
     const body = await request.json();

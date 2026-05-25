@@ -1,17 +1,20 @@
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "@/lib/auth/config";
+import { requireAdminApi } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id || session.user.role !== "ADMIN") {
-      return NextResponse.json({ message: "Accès refusé." }, { status: 403 });
-    }
+    const admin = await requireAdminApi(request);
+    if ("response" in admin) return admin.response;
+
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(1, Number(searchParams.get("page") ?? 1));
+    const limit = Math.min(100, Math.max(1, Number(searchParams.get("limit") ?? 20)));
 
     const payouts = await prisma.payout.findMany({
       orderBy: { requestedAt: "desc" },
+      skip: (page - 1) * limit,
+      take: limit,
     });
 
     const userIds = [...new Set(payouts.map((p) => p.userId))];

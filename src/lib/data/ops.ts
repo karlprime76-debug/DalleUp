@@ -70,13 +70,16 @@ function mockOpsOrders(): OpsOrder[] {
   return mockOrders.map((order) => ({ ...order, dbId: undefined, items: [] }));
 }
 
-export async function getOpsOrders(scope?: { restaurantOwnerId?: string; driverId?: string }): Promise<OpsOrder[]> {
+export async function getOpsOrders(scope?: { restaurantOwnerId?: string; driverId?: string; page?: number; limit?: number }): Promise<OpsOrder[]> {
   try {
+    const page = Math.max(1, scope?.page ?? 1);
+    const limit = Math.min(100, Math.max(1, scope?.limit ?? 20));
     const orders = await prisma.order.findMany({
       where: scope?.restaurantOwnerId ? { restaurant: { ownerId: scope.restaurantOwnerId } } : scope?.driverId ? { delivery: { driverId: scope.driverId } } : undefined,
       include: { customer: true, restaurant: true, address: true, delivery: { include: { driver: true } }, items: { include: { menuItem: true } } },
       orderBy: { createdAt: "desc" },
-      take: 20
+      skip: (page - 1) * limit,
+      take: limit,
     });
     if (!orders.length) return scope?.restaurantOwnerId || scope?.driverId ? [] : mockOpsOrders();
     return orders.map((order) => ({
@@ -100,9 +103,11 @@ export async function getOpsOrders(scope?: { restaurantOwnerId?: string; driverI
   }
 }
 
-export async function getOpsRestaurants(): Promise<OpsRestaurant[]> {
+export async function getOpsRestaurants(page?: number, limit?: number): Promise<OpsRestaurant[]> {
   try {
-    const restaurants = await prisma.restaurant.findMany({ include: { owner: true, _count: { select: { orders: true, menuItems: true } } }, orderBy: { createdAt: "desc" }, take: 20 });
+    const safePage = Math.max(1, page ?? 1);
+    const safeLimit = Math.min(100, Math.max(1, limit ?? 20));
+    const restaurants = await prisma.restaurant.findMany({ include: { owner: true, _count: { select: { orders: true, menuItems: true } } }, orderBy: { createdAt: "desc" }, skip: (safePage - 1) * safeLimit, take: safeLimit });
     if (!restaurants.length) return mockRestaurants.map((restaurant) => ({ id: restaurant.id, name: restaurant.name, owner: "Démo DalleUp", phone: "—", address: "Cotonou", status: "APPROVED", rating: restaurant.rating, orders: mockOrders.filter((order) => order.restaurant === restaurant.name).length, menuItems: 0, isMock: true }));
     return restaurants.map((restaurant) => ({ id: restaurant.slug, dbId: restaurant.id, ownerId: restaurant.ownerId, name: restaurant.name, owner: restaurant.owner.name, phone: restaurant.phone ?? "—", address: restaurant.address, status: restaurant.status, rating: restaurant.rating, orders: restaurant._count.orders, menuItems: restaurant._count.menuItems }));
   } catch (error) {
@@ -111,9 +116,11 @@ export async function getOpsRestaurants(): Promise<OpsRestaurant[]> {
   }
 }
 
-export async function getOpsDrivers(): Promise<OpsDriver[]> {
+export async function getOpsDrivers(page?: number, limit?: number): Promise<OpsDriver[]> {
   try {
-    const drivers = await prisma.user.findMany({ where: { role: "DELIVERY_DRIVER" }, include: { _count: { select: { deliveries: true } } }, take: 20 });
+    const safePage = Math.max(1, page ?? 1);
+    const safeLimit = Math.min(100, Math.max(1, limit ?? 20));
+    const drivers = await prisma.user.findMany({ where: { role: "DELIVERY_DRIVER" }, include: { _count: { select: { deliveries: true } } }, skip: (safePage - 1) * safeLimit, take: safeLimit });
     if (!drivers.length) return mockDrivers.map((driver) => ({ ...driver, email: "demo@dalleup.test", phone: "—", isMock: true }));
     return drivers.map((driver) => ({ id: driver.id, dbId: driver.id, name: driver.name, email: driver.email, phone: driver.phone ?? "—", status: driver.driverStatus ?? "PENDING", deliveries: driver._count.deliveries, earnings: driver._count.deliveries * 2500 }));
   } catch (error) {
@@ -122,9 +129,11 @@ export async function getOpsDrivers(): Promise<OpsDriver[]> {
   }
 }
 
-export async function getOpsUsers(): Promise<OpsUser[]> {
+export async function getOpsUsers(page?: number, limit?: number): Promise<OpsUser[]> {
   try {
-    const users = await prisma.user.findMany({ orderBy: { createdAt: "desc" }, take: 40 });
+    const safePage = Math.max(1, page ?? 1);
+    const safeLimit = Math.min(100, Math.max(1, limit ?? 40));
+    const users = await prisma.user.findMany({ orderBy: { createdAt: "desc" }, skip: (safePage - 1) * safeLimit, take: safeLimit });
     if (!users.length) return [
       { id: "demo-admin", name: "Admin DalleUp", email: "admin@dalleup.test", phone: "—", role: "ADMIN", driverStatus: "—", createdAt: "Démo" },
       { id: "demo-client", name: "Client DalleUp", email: "client@dalleup.test", phone: "—", role: "CLIENT", driverStatus: "—", createdAt: "Démo" }

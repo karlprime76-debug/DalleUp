@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth/config";
+import { rateLimitRequest } from "@/lib/rate-limit";
 import { canAccess, getDashboardPathByRole, type UserRole } from "@/lib/auth/roles";
 import { prisma } from "@/lib/db/prisma";
 
@@ -16,7 +17,13 @@ export async function requireAdmin() {
   return requireRole(["ADMIN"]);
 }
 
-export async function requireAdminApi() {
+export async function requireAdminApi(request?: Request) {
+  if (request) {
+    const limit = rateLimitRequest(request, "/api/admin");
+    if (!limit.ok) {
+      return { response: NextResponse.json({ message: "Trop de requêtes. Réessayez plus tard." }, { status: 429, headers: { "Retry-After": String(limit.retryAfter ?? 60) } }) };
+    }
+  }
   const session = await getServerSession(authOptions);
   if (!session?.user) return { response: NextResponse.json({ message: "Authentification requise." }, { status: 401 }) };
   if (session.user.role !== "ADMIN") return { response: NextResponse.json({ message: "Accès admin requis." }, { status: 403 }) };

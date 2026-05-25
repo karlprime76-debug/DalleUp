@@ -24,9 +24,11 @@ export async function logAdminAction(input: AdminAuditInput) {
   }
 }
 
-export async function getAdminAuditLogs(): Promise<AdminAuditLogItem[]> {
+export async function getAdminAuditLogs(page?: number, limit?: number): Promise<AdminAuditLogItem[]> {
   try {
-    const logs = await prisma.adminAuditLog.findMany({ include: { admin: true }, orderBy: { createdAt: "desc" }, take: 50 });
+    const safePage = Math.max(1, page ?? 1);
+    const safeLimit = Math.min(100, Math.max(1, limit ?? 50));
+    const logs = await prisma.adminAuditLog.findMany({ include: { admin: true }, orderBy: { createdAt: "desc" }, skip: (safePage - 1) * safeLimit, take: safeLimit });
     if (!logs.length) return mockAuditLogs();
     return logs.map((log) => ({ id: log.id, admin: log.admin.name, action: log.action, targetType: log.targetType, targetId: log.targetId ?? "—", targetLabel: log.targetLabel ?? "—", metadata: log.metadata ? JSON.stringify(log.metadata) : "—", createdAt: log.createdAt.toLocaleString("fr-FR") }));
   } catch (error) {
