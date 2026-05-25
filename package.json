@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "launch:audit": "tsx scripts/launch-audit.ts",
+    "launch:audit:full": "tsx scripts/launch-audit.ts --full",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "tsx prisma/seed.ts",

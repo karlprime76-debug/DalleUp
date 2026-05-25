@@ -141,6 +141,18 @@ async function main() {
   const passwordHash = await passwordHashPromise;
   const categoryNames = Array.from(new Set(restaurants.map((restaurant) => restaurant.category)));
 
+  await prisma.user.upsert({
+    where: { email: "admin@dalleup.test" },
+    update: { name: "Admin DalleUp", role: UserRole.ADMIN, phone: "+229 01 50 25 59 93" },
+    create: { name: "Admin DalleUp", email: "admin@dalleup.test", role: UserRole.ADMIN, phone: "+229 01 50 25 59 93", passwordHash }
+  });
+
+  await prisma.user.upsert({
+    where: { email: "driver@dalleup.test" },
+    update: { name: "Livreur DalleUp", role: UserRole.DELIVERY_DRIVER, phone: "+229 01 90 00 00 10", driverStatus: "AVAILABLE" },
+    create: { name: "Livreur DalleUp", email: "driver@dalleup.test", role: UserRole.DELIVERY_DRIVER, phone: "+229 01 90 00 00 10", driverStatus: "AVAILABLE", passwordHash }
+  });
+
   for (const name of categoryNames) {
     await prisma.restaurantCategory.upsert({ where: { name }, update: {}, create: { name } });
   }
