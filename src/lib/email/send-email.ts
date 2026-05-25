@@ -45,13 +45,15 @@ export async function sendEmail(payload: EmailPayload): Promise<{ success: boole
     });
 
     if (result.error) {
-      console.error("[email] Erreur Resend :", result.error.name);
-      return { success: false, error: result.error.name };
+      const errorDetail = `${result.error.name}: ${result.error.message ?? ""}`;
+      console.error("[email] Erreur Resend", { to: validEmails.length, subject: payload.subject.slice(0, 30), error: errorDetail });
+      return { success: false, error: errorDetail };
     }
 
     return { success: true };
   } catch (error) {
-    console.error("[email] Exception Resend :", error instanceof Error ? error.message : "inconnue");
+    const detail = error instanceof Error ? error.message : "inconnue";
+    console.error("[email] Exception Resend", { to: validEmails.length, subject: payload.subject.slice(0, 30), error: detail });
     return { success: false, error: "Échec d'envoi." };
   }
 }

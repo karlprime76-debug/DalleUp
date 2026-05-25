@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth/config";
+import { createNotification } from "@/lib/data/notifications";
 import { prisma } from "@/lib/db/prisma";
 import { creditOrderDelivery } from "@/lib/billing/ledger";
 
@@ -31,6 +32,24 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       try { await creditOrderDelivery(delivery.orderId); }
       catch (ledgerErr) { if (process.env.NODE_ENV !== "production") console.warn("[DalleUp ledger] credit failed", ledgerErr); }
     }
+
+    const deliveryLabels: Record<string, { title: string; message: string }> = {
+      PICKED_UP: { title: "Commande récupérée", message: `Votre commande ${updated.order.orderNumber} a été récupérée par le livreur.` },
+      ON_THE_WAY: { title: "En route", message: `Votre commande ${updated.order.orderNumber} est en cours de livraison.` },
+      DELIVERED: { title: "Livrée", message: `Votre commande ${updated.order.orderNumber} a été livrée. Bon appétit !` },
+      FAILED: { title: "Livraison échouée", message: `La livraison de votre commande ${updated.order.orderNumber} a échoué. Contactez le support.` },
+    };
+    const info = deliveryLabels[nextStatus];
+    if (info) {
+      await createNotification({
+        userId: delivery.order.customerId,
+        type: "ORDER_STATUS",
+        title: info.title,
+        message: info.message,
+        metadata: { orderId: delivery.orderId, deliveryId: delivery.id, status: nextStatus },
+      });
+    }
+
     return NextResponse.json({ delivery: updated });
   } catch (error) {
     if (process.env.NODE_ENV !== "production") console.warn("[DalleUp ops fallback] delivery status", error);

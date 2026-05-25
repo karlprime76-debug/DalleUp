@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth/config";
+import { createNotification } from "@/lib/data/notifications";
 import { prisma } from "@/lib/db/prisma";
 
 const allowedStatuses = ["PENDING", "ACCEPTED", "PREPARING", "READY", "DRIVER_ASSIGNED", "PICKED_UP", "ON_THE_WAY", "DELIVERED", "CANCELLED"] as const;
@@ -18,6 +19,25 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (!existing) return NextResponse.json({ message: "Commande introuvable." }, { status: 404 });
     if (session.user.role === "RESTAURANT" && existing.restaurant.ownerId !== session.user.id) return NextResponse.json({ message: "Commande non autorisée." }, { status: 403 });
     const order = await prisma.order.update({ where: { id: existing.id }, data: { status: status as typeof allowedStatuses[number] }, include: { restaurant: true } });
+
+    const statusLabels: Record<string, string> = {
+      ACCEPTED: "Commande acceptée",
+      PREPARING: "En préparation",
+      READY: "Prête à être récupérée",
+      DRIVER_ASSIGNED: "Livreur assigné",
+      CANCELLED: "Commande annulée",
+    };
+    const label = statusLabels[status];
+    if (label) {
+      await createNotification({
+        userId: existing.customerId,
+        type: "ORDER_STATUS",
+        title: label,
+        message: `Votre commande ${existing.orderNumber} chez ${existing.restaurant.name} est ${label.toLowerCase()}.`,
+        metadata: { orderId: existing.id, orderNumber: existing.orderNumber, status },
+      });
+    }
+
     return NextResponse.json({ order });
   } catch (error) {
     if (process.env.NODE_ENV !== "production") console.warn("[DalleUp ops fallback] PATCH order status", error);

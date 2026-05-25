@@ -130,6 +130,8 @@ model User {
   billingNotifications BillingNotification[]
   wallet               Wallet?
   payouts              Payout[]
+  notifications        Notification[]
+  pushSubscriptions    PushSubscription[]
   verificationStatus   String?
   verificationSubmittedAt DateTime?
 }
@@ -502,6 +504,41 @@ model Payout {
   requestedAt DateTime     @default(now())
   paidAt      DateTime?
   user        User         @relation(fields: [userId], references: [id])
+}
+
+enum NotificationType {
+  ORDER_STATUS
+  ORDER_NEW
+  VALIDATION_APPROVED
+  VALIDATION_REJECTED
+  PAYOUT_STATUS
+  SYSTEM
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  read      Boolean          @default(false)
+  metadata  String?
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read, createdAt])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model SettlementBatch {
