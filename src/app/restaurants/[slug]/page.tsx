@@ -1,5 +1,6 @@
 import { ArrowLeft, ShoppingBag, Star } from "lucide-react";
 import { notFound } from "next/navigation";
+import { HighlightItem } from "@/components/customer/highlight-item";
 import { MenuItemCard } from "@/components/customer/menu-item-card";
 import { SiteHeader } from "@/components/layout/site-header";
 import { Badge } from "@/components/ui/badge";
@@ -9,8 +10,10 @@ import { getDisplayCategory, productFilters } from "@/lib/catalog/product-types"
 import { getMenuItemsByRestaurantId, getRestaurantById } from "@/lib/data/restaurants";
 import { formatPrice } from "@/lib/pricing/delivery";
 
-export default async function PublicRestaurantDetailsPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function PublicRestaurantDetailsPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams?: Promise<{ item?: string }> }) {
   const { slug } = await params;
+  const query = await searchParams;
+  const highlightItemId = query?.item ?? null;
   const restaurant = await getRestaurantById(slug);
   if (!restaurant) notFound();
   const items = (await getMenuItemsByRestaurantId(slug)).map((item) => ({ ...item, restaurantId: restaurant.id, restaurantName: restaurant.name }));
@@ -44,8 +47,9 @@ export default async function PublicRestaurantDetailsPage({ params }: { params: 
           <section className="mt-8">
             <div className="flex flex-col justify-between gap-3 md:flex-row md:items-end"><div><p className="font-black text-dalle-orange">Produits du restaurant</p><h2 className="text-3xl font-black text-dalle-charcoal">Catalogue disponible</h2></div><div className="flex gap-2 overflow-x-auto pb-2">{productFilters.map((filter, index) => <Badge key={filter} variant={index === 0 ? "dark" : "soft"} className="shrink-0">{filter}</Badge>)}</div></div>
             <div className="mt-3 flex gap-2 overflow-x-auto pb-2">{categories.map((category) => <Badge key={category} variant="neutral" className="shrink-0">{category}</Badge>)}</div>
-            <div className="mt-5 grid gap-4 md:grid-cols-2">{items.map((item, index) => <MenuItemCard key={item.id} item={item} popular={index < 2} restaurantName={restaurant.name} restaurantOpen={restaurant.isOpen} />)}</div>
+            <div className="mt-5 grid gap-4 md:grid-cols-2">{items.map((item, index) => <MenuItemCard key={item.id} id={`menu-item-${item.id}`} item={item} popular={index < 2} restaurantName={restaurant.name} restaurantOpen={restaurant.isOpen} />)}</div>
             {items.length === 0 ? <Card className="mt-5 p-6 text-center font-bold text-neutral-500">Aucun produit disponible pour le moment.</Card> : null}
+            <HighlightItem itemId={highlightItemId} />
           </section>
         </div>
       </main>

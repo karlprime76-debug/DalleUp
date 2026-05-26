@@ -3,14 +3,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { RestaurantCard } from "@/components/customer/restaurant-card";
+import { TrendingDishCard } from "@/components/customer/trending-dish-card";
 import { SiteHeader } from "@/components/layout/site-header";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { authOptions } from "@/lib/auth/config";
 import { getDashboardPathByRole, type UserRole } from "@/lib/auth/roles";
-import { menuItems, restaurants } from "@/lib/mock-data";
-import { formatPrice } from "@/lib/pricing/delivery";
+import { getPopularRestaurants, getTrendingMenuItems } from "@/lib/data/restaurants";
 import { site } from "@/lib/site";
 
 export default async function HomePage() {
@@ -18,6 +18,7 @@ export default async function HomePage() {
   const role = session?.user?.role as UserRole | undefined;
   const dashboardHref = getDashboardPathByRole(role);
   const isLoggedIn = !!session?.user;
+  const [popularRestaurants, trendingItems] = await Promise.all([getPopularRestaurants(), getTrendingMenuItems()]);
 
   const steps = [
     { icon: Utensils, title: "Choisissez votre envie", text: "Pizza, grillades, burger ou plat béninois : filtrez et commandez." },
@@ -90,12 +91,12 @@ export default async function HomePage() {
 
         <section className="mx-auto max-w-7xl px-4 py-10">
           <div className="flex items-end justify-between gap-4"><div><Badge>Populaires</Badge><h2 className="mt-3 text-3xl font-black">Restaurants qui buzzent</h2></div><ButtonLink href="/restaurants" variant="dark">Voir tout</ButtonLink></div>
-          <div className="mt-6 grid gap-5 md:grid-cols-3">{restaurants.slice(0, 3).map((restaurant) => <RestaurantCard key={restaurant.id} restaurant={restaurant} hrefPrefix="/restaurants" />)}</div>
+          <div className="mt-6 grid gap-5 md:grid-cols-3">{popularRestaurants.slice(0, 3).map((restaurant) => <RestaurantCard key={restaurant.id} restaurant={restaurant} hrefPrefix="/restaurants" />)}</div>
         </section>
 
         <section className="mx-auto max-w-7xl px-4 py-10">
           <div className="flex items-center justify-between"><h2 className="text-3xl font-black">Plats tendances</h2><Badge variant="lime"><Flame size={14} /> Hot</Badge></div>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{menuItems.slice(0, 8).map((item, index) => <Card key={item.id} className="overflow-hidden"><div className="h-32 bg-cover bg-center" style={{ backgroundImage: `url(${item.image})` }} /><div className="p-4"><div className="flex items-center justify-between gap-2"><h3 className="font-black">{item.name}</h3>{index < 3 ? <Badge variant="lime">Top</Badge> : null}</div><p className="mt-2 line-clamp-2 text-sm text-neutral-500">{item.description}</p><p className="mt-3 font-black text-dalle-orange">{formatPrice(item.price)}</p></div></Card>)}</div>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{trendingItems.slice(0, 8).map((item) => <TrendingDishCard key={item.id} item={item} />)}</div>
         </section>
 
         <section className="mx-auto grid max-w-7xl gap-5 px-4 py-14 md:grid-cols-3">

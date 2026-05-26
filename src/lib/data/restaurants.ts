@@ -69,13 +69,4 @@ export async function getMenuItemsByRestaurantId(restaurantId: string): Promise<
   return [];
 }
 
-export async function getTrendingMenuItems(): Promise<AppMenuItem[]> {
-  try {
-    const items = await prisma.menuItem.findMany({ where: { isActive: true, restaurant: { status: "APPROVED" } }, include: { restaurant: true, category: true }, orderBy: { createdAt: "desc" }, take: 8 });
-    if (!items.length) return [];
-    return items.map(mapMenuItem);
-  } catch (error) {
-    warnFallback("getTrendingMenuItems", error);
-    return [];
-  }
-}
+export { getTrendingMenuItems, getFallbackTrendingMenuItems } from "@/lib/catalog/trending";
