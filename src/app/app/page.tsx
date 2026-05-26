@@ -31,7 +31,7 @@ export default async function CustomerHomePage() {
           <section className="mt-8"><div className="flex items-center justify-between"><h2 className="text-2xl font-black">Plats tendances</h2><Badge variant="soft">Hot</Badge></div><div className="mt-4 grid gap-4 md:grid-cols-2">{trendingItems.slice(0, 6).map((item, index) => <TrendingDishCard key={item.id} item={item} rank={index} />)}</div></section>
         </div>
       </main>
-      <ButtonLink href="/app/cart" className="fixed bottom-24 right-4 z-40 shadow-2xl md:hidden" variant="dark"><ShoppingBag size={18} /> Panier</ButtonLink>
+      <ButtonLink href="/app/cart" className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] right-4 z-50 shadow-2xl md:hidden" variant="dark"><ShoppingBag size={18} /> Panier</ButtonLink>
     </>
   );
 }

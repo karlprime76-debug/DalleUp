@@ -38,7 +38,7 @@ export default async function RestaurantDetailsPage({ params, searchParams }: { 
         <section className="mt-8"><div className="flex flex-col justify-between gap-3 md:flex-row md:items-end"><div><p className="font-black text-dalle-orange">Produits du restaurant</p><h2 className="text-3xl font-black text-dalle-charcoal">Catalogue disponible</h2></div><div className="flex gap-2 overflow-x-auto pb-2">{categories.map((category) => <Badge key={category} variant="soft" className="shrink-0">{category}</Badge>)}</div></div><div className="mt-5 grid gap-4 md:grid-cols-2">{items.map((item, index) => <MenuItemCard key={item.id} id={`menu-item-${item.id}`} item={item} popular={index < 2} restaurantName={restaurant.name} restaurantOpen={restaurant.isOpen} />)}</div></section>
         <HighlightItem itemId={highlightItemId} />
       </div>
-      <ButtonLink href="/app/cart" className="fixed bottom-24 right-4 z-40 shadow-2xl md:hidden" variant="dark"><ShoppingBag size={18} /> Panier</ButtonLink>
+      <ButtonLink href="/app/cart" className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] right-4 z-50 shadow-2xl md:hidden" variant="dark"><ShoppingBag size={18} /> Panier</ButtonLink>
     </main>
   );
 }

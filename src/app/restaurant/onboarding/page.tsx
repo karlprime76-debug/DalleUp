@@ -103,7 +103,7 @@ export default function RestaurantOnboardingPage() {
   const isConfigured = initial.name && initial.description && initial.address && initial.address !== "Non renseigné";
 
   return (
-    <main className="grid min-h-screen place-items-center bg-dalle-cream px-4 py-10 pb-32">
+    <main className="grid min-h-screen place-items-center bg-dalle-cream px-4 py-10 pb-[calc(96px+env(safe-area-inset-bottom))]">
       <div className="w-full max-w-xl">
         <Link href="/" aria-label="Retour à l'accueil" className="mb-6 inline-flex items-center gap-2 font-black text-dalle-charcoal">
           <Image src="/brand/dalleup-icon.svg" alt="DalleUp" width={32} height={32} className="rounded-xl shadow-sm" priority />
