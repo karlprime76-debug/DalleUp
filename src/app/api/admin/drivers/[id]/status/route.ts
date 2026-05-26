@@ -5,7 +5,7 @@ import { logAdminAction } from "@/lib/data/admin-audit";
 import { createNotification } from "@/lib/data/notifications";
 import { prisma } from "@/lib/db/prisma";
 
-const allowedStatuses = ["PENDING", "AVAILABLE", "OFFLINE", "ON_DELIVERY", "SUSPENDED"] as const;
+const allowedStatuses = ["PENDING", "AVAILABLE", "OFFLINE", "ON_DELIVERY", "SUSPENDED", "REJECTED"] as const;
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -20,9 +20,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const updated = await prisma.user.update({ where: { id: driver.id }, data: { driverStatus: status as DriverStatus } });
     await logAdminAction({ adminId: admin.session.user.id, action: "DRIVER_STATUS_UPDATED", targetType: "DRIVER", targetId: updated.id, targetLabel: updated.name, metadata: { previousStatus: driver.driverStatus, status } });
 
-    const notifType = status === "AVAILABLE" ? "VALIDATION_APPROVED" : status === "SUSPENDED" ? "VALIDATION_REJECTED" : "SYSTEM";
-    const notifTitle = status === "AVAILABLE" ? "Profil livreur approuvé" : status === "SUSPENDED" ? "Profil suspendu" : "Mise à jour du statut";
-    const notifMessage = status === "AVAILABLE" ? "Votre profil livreur a été approuvé. Vous pouvez maintenant recevoir des livraisons." : status === "SUSPENDED" ? "Votre profil livreur a été suspendu. Contactez le support." : `Votre statut livreur est passé à ${status}.`;
+    const notifType = status === "AVAILABLE" ? "VALIDATION_APPROVED" : status === "REJECTED" ? "VALIDATION_REJECTED" : status === "SUSPENDED" ? "VALIDATION_REJECTED" : "SYSTEM";
+    const notifTitle = status === "AVAILABLE" ? "Profil livreur approuvé" : status === "REJECTED" ? "Profil livreur rejeté" : status === "SUSPENDED" ? "Profil suspendu" : "Mise à jour du statut";
+    const notifMessage = status === "AVAILABLE" ? "Votre profil livreur a été approuvé. Vous pouvez maintenant recevoir des livraisons." : status === "REJECTED" ? "Votre demande livreur a été rejetée. Contactez le support pour plus d'informations." : status === "SUSPENDED" ? "Votre profil livreur a été suspendu. Contactez le support." : `Votre statut livreur est passé à ${status}.`;
     await createNotification({ userId: updated.id, type: notifType, title: notifTitle, message: notifMessage, metadata: { driverId: updated.id, status } });
 
     return NextResponse.json({ driver: updated });

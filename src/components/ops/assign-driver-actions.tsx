@@ -7,17 +7,18 @@ import type { OpsDriver } from "@/lib/data/ops";
 
 export function AssignDriverActions({ orderId, drivers, currentDriverId }: { orderId?: string; drivers: OpsDriver[]; currentDriverId?: string }) {
   const router = useRouter();
-  const [driverId, setDriverId] = useState(currentDriverId ?? drivers[0]?.id ?? "");
+  const assignable = drivers.filter((d) => d.status === "AVAILABLE" || d.status === "OFFLINE");
+  const [driverId, setDriverId] = useState(currentDriverId ?? assignable[0]?.id ?? "");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   async function assignDriver() {
     if (!orderId) {
-      setMessage("Assignation disponible avec une commande Prisma.");
+      setMessage("Assignation indisponible pour le moment.");
       return;
     }
     if (!driverId) {
-      setMessage("Sélectionne un livreur.");
+      setMessage("Sélectionnez un livreur.");
       return;
     }
     setLoading(true);
@@ -37,5 +38,5 @@ export function AssignDriverActions({ orderId, drivers, currentDriverId }: { ord
     }
   }
 
-  return <div className="grid gap-2"><div className="flex flex-wrap gap-2"><select className="rounded-xl bg-white px-3 py-2 text-xs font-bold ring-1 ring-black/10" value={driverId} onChange={(event) => setDriverId(event.target.value)}>{drivers.map((driver) => <option key={driver.id} value={driver.id}>{driver.name}</option>)}</select><Button type="button" size="sm" variant="secondary" disabled={loading || drivers.length === 0} onClick={assignDriver}>{loading ? "..." : "Assigner"}</Button></div>{message ? <p className="text-xs font-bold text-dalle-orange">{message}</p> : null}</div>;
+  return <div className="grid gap-2"><div className="flex flex-wrap gap-2"><select className="rounded-xl bg-white px-3 py-2 text-xs font-bold ring-1 ring-black/10" value={driverId} onChange={(event) => setDriverId(event.target.value)}>{assignable.map((driver) => <option key={driver.id} value={driver.id}>{driver.name} · {driver.status}</option>)}</select><Button type="button" size="sm" variant="secondary" disabled={loading || assignable.length === 0} onClick={assignDriver}>{loading ? "..." : "Assigner"}</Button></div>{message ? <p className="text-xs font-bold text-dalle-orange">{message}</p> : null}</div>;
 }

@@ -1,12 +1,12 @@
 import { prisma } from "@/lib/db/prisma";
 
-export type AdminPayment = { id: string; orderNumber: string; restaurant: string; customer: string; method: string; status: string; amount: number; commission: number; providerRef: string; paidAt: string; isMock?: boolean };
-export type AdminBillingPlan = { id: string; restaurant: string; status: string; plan: string; subscriptionStatus: string; invoices: number; monthlyFee: number; commissionRate: number; orders: number; revenue: number; isMock?: boolean };
-export type AdminInvoice = { id: string; number: string; restaurant: string; status: string; amount: number; commission: number; dueAt: string; paidAt: string; isMock?: boolean };
+export type AdminPayment = { id: string; orderNumber: string; restaurant: string; customer: string; method: string; status: string; amount: number; commission: number; providerRef: string; paidAt: string };
+export type AdminBillingPlan = { id: string; restaurant: string; status: string; plan: string; subscriptionStatus: string; invoices: number; monthlyFee: number; commissionRate: number; orders: number; revenue: number };
+export type AdminInvoice = { id: string; number: string; restaurant: string; status: string; amount: number; commission: number; dueAt: string; paidAt: string };
 export type AdminBillingSummary = { revenue: number; commission: number; paid: number; pending: number; failed: number; refunded: number; invoiceOpen: number; invoicePaid: number; invoiceUncollectible: number };
 export type AdminFinancialReportRow = { month: string; status: string; orderRevenue: number; orderCommission: number; invoiceAmount: number; invoiceCommission: number; estimatedCommission: number };
 export type AdminBillingAnalytics = { paymentRate: number; overdueInvoices: number; activeSubscriptions: number; suspendedRestaurants: number; topRestaurants: { restaurant: string; revenue: number; orders: number; commissionRate: number }[]; invoiceRisks: { restaurant: string; amount: number; status: string; dueAt: string }[] };
-export type AdminBillingData = { summary: AdminBillingSummary; payments: AdminPayment[]; plans: AdminBillingPlan[]; invoices: AdminInvoice[]; report: AdminFinancialReportRow[]; analytics: AdminBillingAnalytics; isMock?: boolean };
+export type AdminBillingData = { summary: AdminBillingSummary; payments: AdminPayment[]; plans: AdminBillingPlan[]; invoices: AdminInvoice[]; report: AdminFinancialReportRow[]; analytics: AdminBillingAnalytics };
 
 function warnFallback(source: string, error?: unknown) {
   if (process.env.NODE_ENV !== "production") console.warn(`[DalleUp billing fallback] ${source}`, error);

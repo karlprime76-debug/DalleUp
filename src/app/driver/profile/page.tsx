@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Bike, Phone, User } from "lucide-react";
 
+import { DriverAvailabilityToggle } from "@/components/driver/driver-availability-toggle";
 import { DriverShell } from "@/components/layout/driver-shell";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -35,7 +36,14 @@ export default async function DriverProfilePage() {
               <Bike size={20} className="text-dalle-orange" />
               <div>
                 <p className="text-xs font-bold text-neutral-500">Moyen de transport</p>
-                <p className="font-black">Moto</p>
+                <p className="font-black">{user.vehicleType ?? "Non renseigné"}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 rounded-2xl bg-neutral-50 p-4">
+              <Phone size={20} className="text-dalle-orange" />
+              <div>
+                <p className="text-xs font-bold text-neutral-500">Ville / zone</p>
+                <p className="font-black">{user.city ?? "Non renseigné"}</p>
               </div>
             </div>
           </div>
@@ -48,6 +56,9 @@ export default async function DriverProfilePage() {
               <div className="flex justify-between"><span>Statut</span><Badge variant={user.driverStatus === "AVAILABLE" ? "lime" : user.driverStatus === "ON_DELIVERY" ? "orange" : "neutral"}>{user.driverStatus}</Badge></div>
               <div className="flex justify-between"><span>Email</span><b>{user.email}</b></div>
               <div className="flex justify-between"><span>Rôle</span><b>Livreur</b></div>
+            </div>
+            <div className="mt-4">
+              <DriverAvailabilityToggle currentStatus={user.driverStatus} />
             </div>
           </Card>
           <Card className="h-fit p-5">

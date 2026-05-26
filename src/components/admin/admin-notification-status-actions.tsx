@@ -9,11 +9,11 @@ const statuses = ["SENT", "FAILED", "PENDING"];
 export function AdminNotificationStatusActions({ notificationId, currentStatus, disabled }: { notificationId?: string; currentStatus: string; disabled?: boolean }) {
   const router = useRouter();
   const [loadingStatus, setLoadingStatus] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(disabled ? "Fallback mock en lecture seule." : null);
+  const [message, setMessage] = useState<string | null>(null);
 
   async function updateStatus(status: string) {
     if (!notificationId || disabled) {
-      setMessage("Action disponible avec une notification Prisma.");
+      setMessage("Cette action n’est pas disponible pour le moment.");
       return;
     }
     setLoadingStatus(status);

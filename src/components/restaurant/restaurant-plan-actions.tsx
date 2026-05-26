@@ -9,11 +9,11 @@ import type { RestaurantBillingPlan } from "@/lib/data/restaurant-billing";
 export function RestaurantPlanActions({ plans, currentPlanId, disabled }: { plans: RestaurantBillingPlan[]; currentPlanId?: string; disabled?: boolean }) {
   const router = useRouter();
   const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(disabled ? "Fallback mock en lecture seule." : null);
+  const [message, setMessage] = useState<string | null>(null);
 
   async function changePlan(planId: string) {
     if (disabled) {
-      setMessage("Changement de plan disponible avec une DB migrée.");
+      setMessage("Cette action n’est pas disponible pour le moment.");
       return;
     }
     setLoadingPlanId(planId);

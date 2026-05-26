@@ -45,7 +45,7 @@ export default async function RestaurantProfilePage() {
       <div className="grid gap-5 xl:grid-cols-[1fr_340px]">
         <Card className="p-5">
           <h2 className="text-xl font-black">Informations publiques</h2>
-          <p className="mb-5 mt-2 text-sm text-neutral-500">{settings.isMock ? "Fallback mock en lecture seule." : "Modifier les informations affichées aux clients."}</p>
+          <p className="mb-5 mt-2 text-sm text-neutral-500">Modifier les informations affichées aux clients.</p>
           <RestaurantSettingsForm settings={settings} />
         </Card>
         <div className="grid gap-5">

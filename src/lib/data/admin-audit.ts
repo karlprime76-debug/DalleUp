@@ -1,7 +1,7 @@
 import type { AdminAuditAction, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 
-export type AdminAuditLogItem = { id: string; admin: string; action: string; targetType: string; targetId: string; targetLabel: string; metadata: string; createdAt: string; isMock?: boolean };
+export type AdminAuditLogItem = { id: string; admin: string; action: string; targetType: string; targetId: string; targetLabel: string; metadata: string; createdAt: string };
 
 export type AdminAuditInput = { adminId: string; action: AdminAuditAction; targetType: string; targetId?: string; targetLabel?: string; metadata?: Prisma.InputJsonValue };
 

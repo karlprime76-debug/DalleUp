@@ -11,7 +11,7 @@ import { getResidenceProofStatus, getVerificationManifest } from "@/lib/supabase
 
 function statusVariant(status: string) {
   if (status === "APPROVED" || status === "AVAILABLE") return "lime";
-  if (status === "SUSPENDED" || status === "CLOSED") return "orange";
+  if (status === "SUSPENDED" || status === "CLOSED" || status === "REJECTED") return "orange";
   return "neutral";
 }
 

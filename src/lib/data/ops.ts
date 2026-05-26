@@ -28,7 +28,6 @@ export type OpsRestaurant = {
   rating: number;
   orders: number;
   menuItems: number;
-  isMock?: boolean;
 };
 
 export type OpsDriver = {
@@ -38,9 +37,10 @@ export type OpsDriver = {
   email: string;
   phone: string;
   status: string;
+  vehicleType: string;
+  city: string;
   deliveries: number;
   earnings: number;
-  isMock?: boolean;
 };
 
 export type OpsUser = {
@@ -117,7 +117,7 @@ export async function getOpsDrivers(page?: number, limit?: number): Promise<OpsD
     const safeLimit = Math.min(100, Math.max(1, limit ?? 20));
     const drivers = await prisma.user.findMany({ where: { role: "DELIVERY_DRIVER" }, include: { _count: { select: { deliveries: true } } }, skip: (safePage - 1) * safeLimit, take: safeLimit });
     if (!drivers.length) return [];
-    return drivers.map((driver) => ({ id: driver.id, dbId: driver.id, name: driver.name, email: driver.email, phone: driver.phone ?? "—", status: driver.driverStatus ?? "PENDING", deliveries: driver._count.deliveries, earnings: driver._count.deliveries * 2500 }));
+    return drivers.map((driver) => ({ id: driver.id, dbId: driver.id, name: driver.name, email: driver.email, phone: driver.phone ?? "—", status: driver.driverStatus ?? "PENDING", vehicleType: driver.vehicleType ?? "—", city: driver.city ?? "—", deliveries: driver._count.deliveries, earnings: driver._count.deliveries * 2500 }));
   } catch (error) {
     warnFallback("getOpsDrivers", error);
     return [];

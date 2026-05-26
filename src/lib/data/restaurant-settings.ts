@@ -12,7 +12,6 @@ export type RestaurantSettings = {
   deliveryFee: number;
   minDelayMin: number;
   maxDelayMin: number;
-  isMock?: boolean;
 };
 
 function warnFallback(source: string, error?: unknown) {

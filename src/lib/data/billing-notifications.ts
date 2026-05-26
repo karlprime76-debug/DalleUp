@@ -1,7 +1,7 @@
 import type { BillingNotificationStatus, BillingNotificationType, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 
-export type BillingNotificationItem = { id: string; user: string; restaurant: string; type: string; status: string; title: string; message: string; metadata: string; createdAt: string; sentAt: string; isMock?: boolean };
+export type BillingNotificationItem = { id: string; user: string; restaurant: string; type: string; status: string; title: string; message: string; metadata: string; createdAt: string; sentAt: string };
 export type BillingNotificationInput = { userId?: string; restaurantId?: string; type: BillingNotificationType; status?: BillingNotificationStatus; title: string; message: string; metadata?: Prisma.InputJsonValue };
 export type BillingNotificationFilters = { status?: string; type?: string };
 

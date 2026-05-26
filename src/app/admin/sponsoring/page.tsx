@@ -34,8 +34,8 @@ export default async function AdminSponsoringPage() {
           Activez ou désactivez la mise en avant d’un restaurant. Les restaurants mis en avant apparaissent en priorité sur l’accueil client.
         </p>
         <div className="mt-4 rounded-2xl bg-orange-50 p-4 text-sm text-neutral-700">
-          <p className="font-bold">Note MVP</p>
-          <p>Le modèle actuel utilise le champ <code className="rounded bg-white px-1 py-0.5 font-mono text-xs">isPopular</code> sur Restaurant. Pour une gestion complète avec dates, priorités, statuts de campagne et tracking des clics, une migration Prisma est nécessaire.</p>
+          <p className="font-bold">Information</p>
+          <p>La mise en avant utilise le champ <code className="rounded bg-white px-1 py-0.5 font-mono text-xs">isPopular</code> sur le modèle Restaurant.</p>
         </div>
 
         {sponsored.length > 0 ? (

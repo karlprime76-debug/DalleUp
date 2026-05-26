@@ -32,6 +32,8 @@ export async function POST(request: Request) {
     const name = String(body.name ?? "").trim();
     email = String(body.email ?? "").trim().toLowerCase();
     const phone = String(body.phone ?? "").trim();
+    const city = String(body.city ?? "").trim();
+    const vehicleType = String(body.vehicleType ?? "").trim();
     const password = String(body.password ?? "");
     const confirmPassword = String(body.confirmPassword ?? "");
     requestedRole = String(body.role ?? "CLIENT");
@@ -50,7 +52,7 @@ export async function POST(request: Request) {
 
     const user = await prisma.$transaction(async (tx) => {
       const createdUser = await tx.user.create({
-        data: { name, email, phone: phone || null, passwordHash, role: requestedRole as typeof allowedPublicRoles[number] },
+        data: { name, email, phone: phone || null, passwordHash, role: requestedRole as typeof allowedPublicRoles[number], city: city || null, vehicleType: vehicleType || null },
         select: { id: true, name: true, email: true, role: true }
       });
 

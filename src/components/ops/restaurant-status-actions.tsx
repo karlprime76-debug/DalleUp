@@ -13,7 +13,7 @@ export function RestaurantStatusActions({ restaurantId }: { restaurantId?: strin
 
   async function updateStatus(status: string) {
     if (!restaurantId) {
-      setMessage("Action disponible avec un restaurant Prisma.");
+      setMessage("Cette action n’est pas disponible pour le moment.");
       return;
     }
     setLoadingStatus(status);

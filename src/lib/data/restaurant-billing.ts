@@ -8,7 +8,6 @@ export type RestaurantInvoice = {
   commission: number;
   dueAt: string;
   paidAt: string;
-  isMock?: boolean;
 };
 
 export type RestaurantBillingPlan = {
@@ -18,7 +17,6 @@ export type RestaurantBillingPlan = {
   monthlyFee: number;
   commissionRate: number;
   interval: string;
-  isMock?: boolean;
 };
 
 export type RestaurantBilling = {
@@ -32,7 +30,6 @@ export type RestaurantBilling = {
   endsAt: string;
   invoices: RestaurantInvoice[];
   availablePlans: RestaurantBillingPlan[];
-  isMock?: boolean;
 };
 
 function warnFallback(source: string, error?: unknown) {

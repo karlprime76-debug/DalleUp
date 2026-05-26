@@ -8,11 +8,11 @@ import type { RestaurantInvoice } from "@/lib/data/restaurant-billing";
 export function RestaurantInvoiceActions({ invoices, disabled }: { invoices: RestaurantInvoice[]; disabled?: boolean }) {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(disabled ? "Fallback mock en lecture seule." : null);
+  const [message, setMessage] = useState<string | null>(null);
 
   async function requestAction(key: string, url: string, method: "PATCH" | "POST") {
     if (disabled) {
-      setMessage("Action disponible avec une DB migrée.");
+      setMessage("Cette action n’est pas disponible pour le moment.");
       return;
     }
     setLoading(key);

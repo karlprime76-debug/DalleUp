@@ -15,7 +15,7 @@ export function OrderStatusActions({ orderId, role = "admin" }: { orderId?: stri
 
   async function updateStatus(status: string) {
     if (!orderId) {
-      setMessage("Action disponible avec une commande Prisma.");
+      setMessage("Cette action n’est pas disponible pour le moment.");
       return;
     }
     setLoadingStatus(status);

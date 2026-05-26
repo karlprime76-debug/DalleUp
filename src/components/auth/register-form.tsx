@@ -89,6 +89,18 @@ export function RegisterForm({ role = "CLIENT" }: { role?: "CLIENT" | "RESTAURAN
       <Input name="name" className="mt-6" placeholder="Nom complet" required />
       <Input name="email" className="mt-3" placeholder="Email" type="email" required />
       <Input name="phone" className="mt-3" placeholder="Téléphone" />
+      {role === "DELIVERY_DRIVER" ? (
+        <>
+          <Input name="city" className="mt-3" placeholder="Ville / zone de livraison (ex: Cotonou)" />
+          <select name="vehicleType" className="mt-3 w-full rounded-3xl border border-black/5 bg-white px-5 py-4 text-sm font-semibold outline-none shadow-sm" defaultValue="">
+            <option value="" disabled>Moyen de transport</option>
+            <option value="MOTO">Moto</option>
+            <option value="VELO">Vélo</option>
+            <option value="VOITURE">Voiture</option>
+            <option value="AUTRE">Autre</option>
+          </select>
+        </>
+      ) : null}
       <div className="mt-3 relative">
         <Input name="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Mot de passe" type={showPassword ? "text" : "password"} required className="pr-10" />
         <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-bold text-neutral-500 hover:text-dalle-orange" aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}>{showPassword ? "Masquer" : "Afficher"}</button>

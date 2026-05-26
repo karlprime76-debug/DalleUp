@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 import { useImageUpload } from "@/hooks/use-image-upload";
 import { productCategoryOptions } from "@/lib/catalog/product-types";
 
-export function MenuItemForm({ item }: { item?: { id?: string; name: string; description: string; price: number; image: string; category: string; isActive: boolean; isMock?: boolean } }) {
+export function MenuItemForm({ item }: { item?: { id?: string; name: string; description: string; price: number; image: string; category: string; isActive: boolean } }) {
   const router = useRouter();
-  const [message, setMessage] = useState<string | null>(item?.isMock ? "Donnée mock en lecture seule." : null);
+  const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [imageUrl, setImageUrl] = useState(item?.image ?? "");
   const [selectedCategory, setSelectedCategory] = useState(item?.category ?? "Plat");
@@ -29,10 +29,6 @@ export function MenuItemForm({ item }: { item?: { id?: string; name: string; des
   }
 
   async function submit(formData: FormData) {
-    if (item?.isMock) {
-      setMessage("Modification disponible avec un plat Prisma.");
-      return;
-    }
     setLoading(true);
     setMessage(null);
     const payload = { name: formData.get("name"), description: formData.get("description"), price: Number(formData.get("price")), image: imageUrl, category: formData.get("category"), isActive: formData.get("isActive") === "on" };
@@ -106,7 +102,7 @@ export function MenuItemForm({ item }: { item?: { id?: string; name: string; des
       </label>
 
       {message ? <p className="rounded-2xl bg-orange-50 px-4 py-3 text-sm font-bold text-dalle-orange">{message}</p> : null}
-      <Button type="submit" disabled={loading || uploading || item?.isMock}>{loading ? "Enregistrement..." : uploading ? "Upload en cours..." : "Enregistrer le produit"}</Button>
+      <Button type="submit" disabled={loading || uploading}>{loading ? "Enregistrement..." : uploading ? "Upload en cours..." : "Enregistrer le produit"}</Button>
     </form>
   );
 }

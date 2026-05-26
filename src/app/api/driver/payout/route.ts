@@ -1,16 +1,14 @@
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "@/lib/auth/config";
+import { requireApprovedDriverApi } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
 import { sendEmail } from "@/lib/email/send-email";
 import { formatPrice } from "@/lib/pricing/delivery";
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id || session.user.role !== "DELIVERY_DRIVER") {
-      return NextResponse.json({ message: "Accès refusé." }, { status: 403 });
-    }
+    const result = await requireApprovedDriverApi();
+    if ("response" in result) return result.response;
+    const { session } = result;
 
     const body = await request.json();
     const amount = Number(body.amount ?? 0);

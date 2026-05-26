@@ -2,10 +2,10 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { Card } from "@/components/ui/card";
 
 const faqs = [
-  { question: "DalleUp est-il déjà disponible ?", answer: "Le MVP est en ligne pour présenter l’expérience et tester les parcours essentiels." },
-  { question: "Puis-je commander sans compte ?", answer: "Le parcours complet de commande est prévu pour les utilisateurs connectés afin de suivre l’historique." },
-  { question: "Comment devenir restaurant partenaire ?", answer: "Utilise la page partenaires ou le formulaire d’inscription restaurant pour manifester ton intérêt." },
-  { question: "Les paiements Mobile Money sont-ils actifs ?", answer: "Ils sont prévus dans la feuille de route. Le MVP privilégie d’abord la validation du parcours commande." }
+  { question: "DalleUp est-il déjà disponible ?", answer: "Oui, la plateforme est active. Vous pouvez commander dès maintenant auprès des restaurants partenaires approuvés." },
+  { question: "Puis-je commander sans compte ?", answer: "Non, un compte est nécessaire pour passer une commande et suivre votre historique. L’inscription est rapide." },
+  { question: "Comment devenir restaurant partenaire ?", answer: "Inscrivez-vous en tant que restaurant sur la page d’inscription, complétez votre profil et soumettez votre demande. Notre équipe l’examinera sous peu." },
+  { question: "Les paiements Mobile Money sont-ils actifs ?", answer: "Les paiements par Mobile Money et carte sont en cours d’intégration. Pour le moment, le paiement à la livraison est disponible." }
 ];
 
 export default function FaqPage() {

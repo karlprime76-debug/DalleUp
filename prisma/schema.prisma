@@ -63,6 +63,7 @@ enum DriverStatus {
   OFFLINE
   ON_DELIVERY
   SUSPENDED
+  REJECTED
 }
 
 enum BillingInterval {
@@ -131,6 +132,8 @@ model User {
   wallet               Wallet?
   payouts              Payout[]
   notifications        Notification[]
+  vehicleType          String?
+  city                 String?
   pushSubscriptions    PushSubscription[]
   verificationStatus   String?
   verificationSubmittedAt DateTime?

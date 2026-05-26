@@ -1,6 +1,47 @@
 import { requireAdmin } from "@/lib/auth/guards";
 import { AdminShell } from "@/components/layout/admin-shell";
-import { adminNavSections } from "@/lib/navigation/admin-nav"; import { orders, restaurants, drivers, stats } from '@/lib/mock-data'; import { StatCard } from '@/components/ui/stat-card'; export default async function Page(){await requireAdmin(); return <AdminShell title="Admin Paramètres" sections={adminNavSections}><div className='grid gap-4 md:grid-cols-4'><StatCard label='Commandes' value={String(stats.orders)} /><StatCard label='Restaurants' value={String(restaurants.length)} /><StatCard label='Livreurs' value={String(drivers.length)} /><StatCard label='CA' value={String(stats.revenue)} /></div><div className='mt-6 rounded-[2rem] bg-white p-5 shadow-sm'><h2 className='text-xl font-black'>Actions MVP</h2><p className='mt-2 text-neutral-500'>Gestion des statuts, menus, livreurs, paiements et paramètres prête à connecter aux APIs.</p><div className='mt-4 grid gap-2'>{orders.map(o=><div key={o.id} className='rounded-2xl bg-neutral-50 p-3'>{o.id} · {o.restaurant} · {o.status}</div>)}</div></div></AdminShell>}
+import { adminNavSections } from "@/lib/navigation/admin-nav";
+import { StatCard } from "@/components/ui/stat-card";
+import { Card } from "@/components/ui/card";
+import { prisma } from "@/lib/db/prisma";
+import { formatPrice } from "@/lib/pricing/delivery";
+
+export default async function AdminSettingsPage() {
+  await requireAdmin();
+
+  const [totalOrders, totalRestaurants, totalDrivers, totalUsers] = await Promise.all([
+    prisma.order.count(),
+    prisma.restaurant.count(),
+    prisma.user.count({ where: { role: "DELIVERY_DRIVER" } }),
+    prisma.user.count()
+  ]);
+
+  const revenueAgg = await prisma.order.aggregate({
+    where: { status: { not: "CANCELLED" } },
+    _sum: { total: true }
+  });
+  const totalRevenue = revenueAgg._sum.total ?? 0;
+
+  return (
+    <AdminShell title="Paramètres" sections={adminNavSections}>
+      <div className="grid gap-4 md:grid-cols-5">
+        <StatCard label="Commandes" value={String(totalOrders)} />
+        <StatCard label="Restaurants" value={String(totalRestaurants)} />
+        <StatCard label="Livreurs" value={String(totalDrivers)} />
+        <StatCard label="Utilisateurs" value={String(totalUsers)} />
+        <StatCard label="CA" value={formatPrice(totalRevenue)} />
+      </div>
+      <Card className="mt-6 p-5">
+        <h2 className="text-xl font-black">Paramètres système</h2>
+        <p className="mt-2 text-neutral-500">Cette page regroupe les paramètres globaux de la plateforme. Les fonctionnalités avancées seront ajoutées progressivement.</p>
+        <div className="mt-4 rounded-2xl bg-orange-50 p-4 text-sm text-neutral-700">
+          <p className="font-bold">En cours de développement</p>
+          <p>La configuration des frais de livraison par zone, des seuils de commission et des notifications globales sera disponible prochainement.</p>
+        </div>
+      </Card>
+    </AdminShell>
+  );
+}
 
 
 

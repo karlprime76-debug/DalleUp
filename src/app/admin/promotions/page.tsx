@@ -19,7 +19,7 @@ export default async function AdminPromotionsPage() {
     <AdminShell title="Promotions" sections={adminNavSections}>
       <Card className="p-5">
         <h2 className="text-xl font-black">Codes promo</h2>
-        <p className="mt-2 text-sm text-neutral-500">Gestion MVP en lecture. La création et l’usage max nécessitent une interface dédiée et une migration pour les compteurs d’utilisation.</p>
+        <p className="mt-2 text-sm text-neutral-500">Gestion des codes promo et offres promotionnelles.</p>
         <div className="mt-4 grid gap-3">
           {promoCodes.length === 0 ? (
             <p className="text-sm font-bold text-neutral-400">Aucun code promo configuré.</p>

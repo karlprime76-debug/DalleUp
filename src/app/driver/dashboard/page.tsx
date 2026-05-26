@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Bike, ReceiptText, Truck, Wallet } from "lucide-react";
+import { DriverAvailabilityToggle } from "@/components/driver/driver-availability-toggle";
 import { DriverShell } from "@/components/layout/driver-shell";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
@@ -56,6 +57,9 @@ export default async function DriverDashboardPage() {
           <Badge variant={isAvailable ? "lime" : isOnDelivery ? "orange" : "neutral"} className="mt-2">
             {user.driverStatus}
           </Badge>
+          <div className="mt-3">
+            <DriverAvailabilityToggle currentStatus={user.driverStatus} />
+          </div>
         </Card>
         <Card className="p-5">
           <p className="text-sm font-bold text-neutral-500">Livraisons actives</p>

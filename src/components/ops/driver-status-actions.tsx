@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
-const statuses = ["PENDING", "AVAILABLE", "OFFLINE", "ON_DELIVERY", "SUSPENDED"];
+const statuses = ["PENDING", "AVAILABLE", "OFFLINE", "ON_DELIVERY", "SUSPENDED", "REJECTED"];
 
 export function DriverStatusActions({ driverId }: { driverId?: string }) {
   const router = useRouter();
@@ -13,7 +13,7 @@ export function DriverStatusActions({ driverId }: { driverId?: string }) {
 
   async function updateStatus(status: string) {
     if (!driverId) {
-      setMessage("Action disponible avec un livreur Prisma.");
+      setMessage("Cette action n’est pas disponible pour le moment.");
       return;
     }
     setLoadingStatus(status);
@@ -33,5 +33,5 @@ export function DriverStatusActions({ driverId }: { driverId?: string }) {
     }
   }
 
-  return <div className="grid gap-2"><div className="flex flex-wrap gap-2">{statuses.map((status) => <Button key={status} type="button" size="sm" variant={status === "AVAILABLE" ? "secondary" : status === "SUSPENDED" ? "outline" : "dark"} disabled={loadingStatus !== null} onClick={() => updateStatus(status)}>{loadingStatus === status ? "..." : status}</Button>)}</div>{message ? <p className="text-xs font-bold text-dalle-orange">{message}</p> : null}</div>;
+  return <div className="grid gap-2"><div className="flex flex-wrap gap-2">{statuses.map((status) => <Button key={status} type="button" size="sm" variant={status === "AVAILABLE" ? "secondary" : status === "SUSPENDED" || status === "REJECTED" ? "outline" : "dark"} disabled={loadingStatus !== null} onClick={() => updateStatus(status)}>{loadingStatus === status ? "..." : status}</Button>)}</div>{message ? <p className="text-xs font-bold text-dalle-orange">{message}</p> : null}</div>;
 }

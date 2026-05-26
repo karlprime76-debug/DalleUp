@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/db/prisma";
 
-export type AdminComplianceAction = { id: string; action: string; actor: string; target: string; createdAt: string; isMock?: boolean };
-export type AdminComplianceIssue = { id: string; title: string; detail: string; severity: "low" | "medium" | "high"; createdAt: string; isMock?: boolean };
-export type AdminComplianceData = { auditCount: number; sensitiveActions7d: number; financialExports: number; notificationExports: number; pendingNotifications: number; failedNotifications: number; recentActions: AdminComplianceAction[]; issues: AdminComplianceIssue[]; isMock?: boolean };
+export type AdminComplianceAction = { id: string; action: string; actor: string; target: string; createdAt: string };
+export type AdminComplianceIssue = { id: string; title: string; detail: string; severity: "low" | "medium" | "high"; createdAt: string };
+export type AdminComplianceData = { auditCount: number; sensitiveActions7d: number; financialExports: number; notificationExports: number; pendingNotifications: number; failedNotifications: number; recentActions: AdminComplianceAction[]; issues: AdminComplianceIssue[] };
 
 function warnFallback(source: string, error?: unknown) {
   if (process.env.NODE_ENV !== "production") console.warn(`[DalleUp compliance fallback] ${source}`, error);

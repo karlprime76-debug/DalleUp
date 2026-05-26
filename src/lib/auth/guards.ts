@@ -71,6 +71,7 @@ export async function requireApprovedDriver() {
   if (!user) redirect("/driver/pending");
   if (user.driverStatus === "PENDING") redirect("/driver/pending");
   if (user.driverStatus === "SUSPENDED") redirect("/driver/suspended");
+  if (user.driverStatus === "REJECTED") redirect("/driver/rejected");
   return { session, user };
 }
 
@@ -82,5 +83,6 @@ export async function requireApprovedDriverApi() {
   if (!user) return { response: NextResponse.json({ message: "Profil introuvable." }, { status: 404 }) };
   if (user.driverStatus === "PENDING") return { response: NextResponse.json({ message: "Votre profil livreur est en attente de validation." }, { status: 403 }) };
   if (user.driverStatus === "SUSPENDED") return { response: NextResponse.json({ message: "Compte suspendu. Contactez le support." }, { status: 403 }) };
+  if (user.driverStatus === "REJECTED") return { response: NextResponse.json({ message: "Votre demande livreur a été rejetée." }, { status: 403 }) };
   return { session, user };
 }

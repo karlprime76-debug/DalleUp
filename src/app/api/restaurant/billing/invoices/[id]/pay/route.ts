@@ -16,6 +16,6 @@ export async function PATCH(_request: Request, { params }: { params: Promise<{ i
     return NextResponse.json({ invoice: paidInvoice });
   } catch (error) {
     if (process.env.NODE_ENV !== "production") console.warn("[DalleUp restaurant billing fallback] invoice pay", error);
-    return NextResponse.json({ message: "Paiement simulé indisponible." }, { status: 503 });
+    return NextResponse.json({ message: "Paiement indisponible pour le moment." }, { status: 503 });
   }
 }
