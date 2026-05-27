@@ -33,6 +33,7 @@ export async function POST(request: Request) {
     const name = String(body.name ?? "").trim();
     email = String(body.email ?? "").trim().toLowerCase();
     const phone = String(body.phone ?? "").trim();
+    const city = String(body.city ?? "").trim();
     const vehicleType = String(body.vehicleType ?? "").trim();
     const password = String(body.password ?? "");
     const confirmPassword = String(body.confirmPassword ?? "");
@@ -44,6 +45,7 @@ export async function POST(request: Request) {
     if (password.length < 8) return NextResponse.json({ message: "Le mot de passe doit contenir au moins 8 caractères." }, { status: 400 });
     if (password !== confirmPassword) return NextResponse.json({ message: "Les mots de passe ne correspondent pas." }, { status: 400 });
     if (!allowedPublicRoles.includes(requestedRole as typeof allowedPublicRoles[number])) return NextResponse.json({ message: "Type de compte invalide." }, { status: 400 });
+    if (requestedRole === "DELIVERY_DRIVER" && !vehicleType) return NextResponse.json({ message: "Le moyen de transport est obligatoire pour les livreurs." }, { status: 400 });
 
     const settings = await getPlatformSettings();
     if (requestedRole === "RESTAURANT" && settings.disableRestaurantSignup) {
@@ -64,8 +66,8 @@ export async function POST(request: Request) {
         : "PENDING";
 
       const createdUser = await tx.user.create({
-        data: { name, email, phone: phone || null, passwordHash, role: requestedRole as typeof allowedPublicRoles[number], vehicleType: vehicleType || null, driverStatus },
-        select: { id: true, name: true, email: true, role: true }
+        data: { name, email, phone: phone || null, passwordHash, role: requestedRole as typeof allowedPublicRoles[number], vehicleType: vehicleType || null, city: city || null, driverStatus },
+        select: { id: true, name: true, email: true, role: true, driverStatus: true }
       });
 
       if (requestedRole === "RESTAURANT") {

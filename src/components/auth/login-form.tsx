@@ -23,7 +23,12 @@ export function LoginForm() {
     const result = await signIn("credentials", { email: String(formData.get("email")), password: String(formData.get("password")), redirect: false });
     if (result?.error) {
       setLoading(false);
-      setError("Email ou mot de passe incorrect.");
+      if (result.error.startsWith("RATE_LIMITED:")) {
+        const retryAfter = result.error.split(":")[1];
+        setError(`Trop de tentatives. Réessayez dans ${retryAfter ?? "quelques"} secondes.`);
+      } else {
+        setError("Email ou mot de passe incorrect.");
+      }
       return;
     }
     const sessionResponse = await fetch("/api/auth/session");
