@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db/prisma";
-import { calculateOrderSplit } from "./commissions";
+import { getPlatformSettings } from "@/lib/settings/platform-settings";
+import { calculateOrderSplitWithRates } from "./commissions";
 
 export async function ensureWallet(userId: string) {
   const existing = await prisma.wallet.findUnique({ where: { userId } });
@@ -24,9 +25,12 @@ export async function creditOrderPayment(orderId: string) {
     return { skipped: true, reason: "PlatformRevenue already exists", orderId };
   }
 
-  const split = calculateOrderSplit({
+  const settings = await getPlatformSettings();
+  const split = calculateOrderSplitWithRates({
     foodSubtotal: order.subtotal,
     deliveryFee: order.deliveryFee,
+    restaurantRate: settings.restaurantCommissionRate,
+    deliveryRate: settings.deliveryCommissionRate,
   });
 
   const restaurantOwnerId = order.restaurant.ownerId;
@@ -120,9 +124,12 @@ export async function creditOrderDelivery(orderId: string) {
       return { skipped: true, reason: "Driver already credited", orderId };
     }
     // Revenue exists but driver not yet credited — credit driver only
-    const split = calculateOrderSplit({
+    const settings = await getPlatformSettings();
+    const split = calculateOrderSplitWithRates({
       foodSubtotal: order.subtotal,
       deliveryFee: order.deliveryFee,
+      restaurantRate: settings.restaurantCommissionRate,
+      deliveryRate: settings.deliveryCommissionRate,
     });
     const driverWallet = await ensureWallet(order.delivery.driverId);
     await prisma.$transaction([
@@ -152,9 +159,12 @@ export async function creditOrderDelivery(orderId: string) {
     };
   }
 
-  const split = calculateOrderSplit({
+  const settings = await getPlatformSettings();
+  const split = calculateOrderSplitWithRates({
     foodSubtotal: order.subtotal,
     deliveryFee: order.deliveryFee,
+    restaurantRate: settings.restaurantCommissionRate,
+    deliveryRate: settings.deliveryCommissionRate,
   });
 
   const restaurantOwnerId = order.restaurant.ownerId;

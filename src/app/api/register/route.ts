@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db/prisma";
 import { rateLimit } from "@/lib/rate-limit";
+import { getPlatformSettings } from "@/lib/settings/platform-settings";
 import { sanitizeErrorMessage, getPrismaErrorCode, getErrorName } from "@/lib/security/sanitize-error";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -32,7 +33,6 @@ export async function POST(request: Request) {
     const name = String(body.name ?? "").trim();
     email = String(body.email ?? "").trim().toLowerCase();
     const phone = String(body.phone ?? "").trim();
-    const city = String(body.city ?? "").trim();
     const vehicleType = String(body.vehicleType ?? "").trim();
     const password = String(body.password ?? "");
     const confirmPassword = String(body.confirmPassword ?? "");
@@ -45,14 +45,26 @@ export async function POST(request: Request) {
     if (password !== confirmPassword) return NextResponse.json({ message: "Les mots de passe ne correspondent pas." }, { status: 400 });
     if (!allowedPublicRoles.includes(requestedRole as typeof allowedPublicRoles[number])) return NextResponse.json({ message: "Type de compte invalide." }, { status: 400 });
 
+    const settings = await getPlatformSettings();
+    if (requestedRole === "RESTAURANT" && settings.disableRestaurantSignup) {
+      return NextResponse.json({ message: "L'inscription des restaurants est temporairement désactivée." }, { status: 403 });
+    }
+    if (requestedRole === "DELIVERY_DRIVER" && settings.disableDriverSignup) {
+      return NextResponse.json({ message: "L'inscription des livreurs est temporairement désactivée." }, { status: 403 });
+    }
+
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) return NextResponse.json({ message: "Cet email est déjà utilisé." }, { status: 409 });
 
     const passwordHash = await bcrypt.hash(password, 10);
 
     const user = await prisma.$transaction(async (tx) => {
+      const driverStatus = requestedRole === "DELIVERY_DRIVER"
+        ? (settings.manualDriverApproval ? "PENDING" : "AVAILABLE")
+        : "PENDING";
+
       const createdUser = await tx.user.create({
-        data: { name, email, phone: phone || null, passwordHash, role: requestedRole as typeof allowedPublicRoles[number], city: city || null, vehicleType: vehicleType || null },
+        data: { name, email, phone: phone || null, passwordHash, role: requestedRole as typeof allowedPublicRoles[number], vehicleType: vehicleType || null, driverStatus },
         select: { id: true, name: true, email: true, role: true }
       });
 
@@ -67,7 +79,7 @@ export async function POST(request: Request) {
             description: "En attente de configuration",
             address: "Non renseigné",
             phone: phone || null,
-            status: "PENDING",
+            status: settings.manualRestaurantApproval ? "PENDING" : "APPROVED",
           },
           select: { id: true }
         });

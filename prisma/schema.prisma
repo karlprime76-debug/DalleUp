@@ -93,6 +93,7 @@ enum AdminAuditAction {
   FINANCIAL_REPORT_EXPORTED
   BILLING_NOTIFICATION_STATUS_UPDATED
   BILLING_NOTIFICATIONS_EXPORTED
+  PLATFORM_SETTINGS_UPDATED
 }
 
 enum BillingNotificationType {
@@ -422,11 +423,101 @@ model PromoCode {
   isActive    Boolean  @default(true)
 }
 
-model PlatformSetting {
-  id        String   @id @default(cuid())
-  key       String   @unique
-  value     String
+model PlatformSettings {
+  id                          String   @id @default(cuid())
+  platformName                String   @default("DalleUp")
+  platformSlogan              String   @default("Commande. Chill. On livre.")
+  supportEmail                String   @default("support@dalleup.com")
+  supportPhone                String   @default("")
+  whatsappPhone               String   @default("")
+  currency                    String   @default("F CFA")
+  country                     String   @default("Bénin")
+  city                        String   @default("Cotonou")
+
+  defaultDeliveryFee          Int      @default(500)
+  deliveryFeePerKm            Int      @default(100)
+  freeDeliveryThreshold       Int      @default(10000)
+  minOrderAmount              Int      @default(1000)
+  maxDeliveryDistanceKm       Int      @default(15)
+  estimatedPrepTimeMin        Int      @default(20)
+  estimatedDeliveryTimeMin    Int      @default(30)
+
+  restaurantCommissionRate    Int      @default(15)
+  deliveryCommissionRate      Int      @default(0)
+  platformServiceFee          Int      @default(0)
+  restaurantPayoutDelayDays   Int      @default(7)
+  driverPayoutDelayDays       Int      @default(7)
+
+  allowCashPayment            Boolean  @default(true)
+  allowMobileMoneyPayment     Boolean  @default(true)
+  allowCardPayment            Boolean  @default(false)
+
+  autoAcceptOrders            Boolean  @default(false)
+  autoCancelUnpaidOrders      Boolean  @default(true)
+  autoCancelDelayMinutes      Int      @default(15)
+  allowClientOrderCancellation  Boolean  @default(true)
+  allowRestaurantOrderCancellation Boolean @default(true)
+  clientCancellationWindowMin Int      @default(5)
+
+  manualRestaurantApproval    Boolean  @default(true)
+  allowRestaurantSelfProducts Boolean  @default(true)
+  allowRestaurantPriceEdit    Boolean  @default(true)
+  autoHideClosedRestaurants   Boolean  @default(true)
+  minRatingForFeature         Float    @default(4.0)
+
+  manualDriverApproval        Boolean  @default(true)
+  enableAutoDriverAssign      Boolean  @default(false)
+  driverSearchRadiusKm        Int      @default(5)
+  driverAcceptTimeoutSec      Int      @default(300)
+  driverMinFee                Int      @default(300)
+  driverDeliveryBonusEnabled  Boolean  @default(false)
+  allowDriverRefusal          Boolean  @default(true)
+
+  enableSponsoredRestaurants  Boolean  @default(true)
+  sponsoredRestaurantDailyPrice   Int @default(2000)
+  sponsoredRestaurantWeeklyPrice  Int @default(10000)
+  sponsoredRestaurantMonthlyPrice Int @default(30000)
+  maxSponsoredRestaurants         Int @default(6)
+  sponsoredDefaultDurationDays    Int @default(7)
+  sponsoredDefaultStatus          String @default("pending")
+
+  enableTrendingDishes        Boolean  @default(true)
+  trendingDishDailyPrice      Int      @default(1000)
+  trendingDishWeeklyPrice     Int      @default(5000)
+  trendingDishMonthlyPrice    Int      @default(15000)
+  maxTrendingDishes           Int      @default(8)
+  trendingDefaultDurationDays Int      @default(7)
+  trendingDefaultStatus       String   @default("pending")
+
+  enablePushNotifications     Boolean  @default(true)
+  enableEmailNotifications      Boolean  @default(true)
+  enableSmsNotifications        Boolean  @default(false)
+  enableWhatsappNotifications   Boolean  @default(false)
+
+  notifyNewOrderClient          Boolean  @default(true)
+  notifyNewOrderRestaurant      Boolean  @default(true)
+  notifyOrderAccepted           Boolean  @default(true)
+  notifyOrderRejected           Boolean  @default(true)
+  notifyDriverAssigned          Boolean  @default(true)
+  notifyOrderOnTheWay           Boolean  @default(true)
+  notifyOrderDelivered          Boolean  @default(true)
+  notifyPaymentConfirmed        Boolean  @default(true)
+  notifyPaymentFailed           Boolean  @default(true)
+  notifyNewRestaurant           Boolean  @default(true)
+  notifyNewDriver               Boolean  @default(true)
+  notifyNewSponsoring           Boolean  @default(true)
+
+  maintenanceMode             Boolean  @default(false)
+  maintenanceMessage          String   @default("DalleUp est temporairement en maintenance. Merci de revenir dans quelques minutes.")
+  allowAdminInMaintenance     Boolean  @default(true)
+  disableOrdersTemporarily    Boolean  @default(false)
+  disableRestaurantSignup     Boolean  @default(false)
+  disableDriverSignup         Boolean  @default(false)
+
+  createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([updatedAt])
 }
 
 enum LedgerEntryType {

@@ -185,7 +185,6 @@ async function main() {
     await prisma.invoice.upsert({ where: { number: `INV-${seed.slug}-001` }, update: {}, create: { restaurantId: restaurant.id, subscriptionId: subscription.id, number: `INV-${seed.slug}-001`, status: InvoiceStatus.OPEN, amount: plan.monthlyFee, commission: 0 } });
   }
 
-  await prisma.platformSetting.upsert({ where: { key: "default_delivery_fee" }, update: {}, create: { key: "default_delivery_fee", value: "1200" } });
 }
 
 main().finally(async () => prisma.$disconnect());

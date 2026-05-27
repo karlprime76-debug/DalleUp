@@ -1,24 +1,34 @@
 import { prisma } from "@/lib/db/prisma";
+import { getPlatformSettings } from "@/lib/settings/platform-settings";
 import { mapMenuItem, type AppMenuItem } from "@/lib/data/mappers";
 
-const TRENDING_LIMIT = 8;
 const MIN_TRENDING_COUNT = 4;
 
 function warnFallback(source: string, error?: unknown) {
   if (process.env.NODE_ENV !== "production") console.warn(`[DalleUp trending] ${source}`, error);
 }
 
+async function getTrendingLimit(): Promise<number> {
+  try {
+    const settings = await getPlatformSettings();
+    return settings.maxTrendingDishes;
+  } catch {
+    return 8;
+  }
+}
+
 export async function getTrendingMenuItems(): Promise<AppMenuItem[]> {
   try {
+    const limit = await getTrendingLimit();
     const orderBased = await getOrderBasedTrending();
-    if (orderBased.length >= MIN_TRENDING_COUNT) return orderBased;
+    if (orderBased.length >= MIN_TRENDING_COUNT) return orderBased.slice(0, limit);
 
     const extended = await getOrderBasedTrending(30);
     const combined = mergeUnique(orderBased, extended);
-    if (combined.length >= MIN_TRENDING_COUNT) return combined.slice(0, TRENDING_LIMIT);
+    if (combined.length >= MIN_TRENDING_COUNT) return combined.slice(0, limit);
 
     const fallback = await getFallbackTrendingMenuItems();
-    return mergeUnique(combined, fallback).slice(0, TRENDING_LIMIT);
+    return mergeUnique(combined, fallback).slice(0, limit);
   } catch (error) {
     warnFallback("getTrendingMenuItems failed", error);
     return getFallbackTrendingMenuItems();
@@ -64,11 +74,12 @@ async function getOrderBasedTrending(days = 7): Promise<AppMenuItem[]> {
 
 export async function getFallbackTrendingMenuItems(): Promise<AppMenuItem[]> {
   try {
+    const limit = await getTrendingLimit();
     const items = await prisma.menuItem.findMany({
       where: { isActive: true, restaurant: { status: "APPROVED" } },
       include: { restaurant: true, category: true },
       orderBy: { createdAt: "desc" },
-      take: TRENDING_LIMIT
+      take: limit
     });
     if (!items.length) return [];
     return items.map(mapMenuItem);
