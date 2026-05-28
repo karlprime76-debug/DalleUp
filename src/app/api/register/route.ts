@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { rateLimit } from "@/lib/rate-limit";
 import { getPlatformSettings } from "@/lib/settings/platform-settings";
@@ -61,12 +62,20 @@ export async function POST(request: Request) {
     const passwordHash = await bcrypt.hash(password, 10);
 
     const user = await prisma.$transaction(async (tx) => {
-      const driverStatus = requestedRole === "DELIVERY_DRIVER"
-        ? (settings.manualDriverApproval ? "PENDING" : "AVAILABLE")
-        : "PENDING";
+      const driverStatus = settings.manualDriverApproval ? "PENDING" : "AVAILABLE";
+      const userData: Prisma.UserCreateInput = {
+        name,
+        email,
+        phone: phone || null,
+        passwordHash,
+        role: requestedRole as typeof allowedPublicRoles[number],
+        vehicleType: vehicleType || null,
+        city: city || null,
+      };
+      if (requestedRole === "DELIVERY_DRIVER") userData.driverStatus = driverStatus;
 
       const createdUser = await tx.user.create({
-        data: { name, email, phone: phone || null, passwordHash, role: requestedRole as typeof allowedPublicRoles[number], vehicleType: vehicleType || null, city: city || null, driverStatus },
+        data: userData,
         select: { id: true, name: true, email: true, role: true, driverStatus: true }
       });
 
