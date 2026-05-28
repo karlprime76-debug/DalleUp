@@ -1,9 +1,11 @@
 import { defineConfig } from "prisma/config";
 
-try {
-  process.loadEnvFile(".env.local");
-} catch {
-  // ignore
+if (!process.env.DATABASE_URL) {
+  try {
+    process.loadEnvFile(".env.local");
+  } catch {
+    // ignore
+  }
 }
 
 export default defineConfig({
