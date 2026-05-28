@@ -3,9 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { getDashboardPathByRole, type UserRole } from "@/lib/auth/roles";
 
 const roleContent = {
   CLIENT: { eyebrow: "Créer un compte client", title: "Créer un compte client", cta: "Créer mon compte", note: null },
@@ -70,7 +72,16 @@ export function RegisterForm({ role = "CLIENT" }: { role?: "CLIENT" | "RESTAURAN
         setError(payload?.message ?? "Inscription impossible.");
         return;
       }
-      router.push("/login");
+      const email = String(formData.get("email") ?? "");
+      const signInResult = await signIn("credentials", { email, password, redirect: false });
+      if (signInResult?.error) {
+        setMessage("Compte créé. Connecte-toi avec ton email et ton mot de passe.");
+        router.push("/login");
+        return;
+      }
+      const userRole = payload?.role as UserRole | undefined;
+      router.push(getDashboardPathByRole(userRole));
+      router.refresh();
     } catch {
       setLoading(false);
       setError("Inscription impossible pour le moment. Réessaie dans quelques instants.");

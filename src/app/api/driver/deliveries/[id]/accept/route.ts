@@ -14,39 +14,40 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
 
     const { id } = await params;
 
-    const delivery = await prisma.delivery.findFirst({
-      where: { id, status: "PENDING", driverId: null },
+    const delivery = await prisma.delivery.findUnique({
+      where: { id },
       include: { order: { select: { status: true } } }
     });
 
     if (!delivery) {
-      const existing = await prisma.delivery.findUnique({ where: { id }, select: { driverId: true, status: true } });
-      if (existing?.driverId && existing.driverId !== session.user.id) {
-        return NextResponse.json({ message: "Cette livraison a déjà été acceptée." }, { status: 409 });
-      }
-      if (existing?.driverId === session.user.id) {
-        return NextResponse.json({ message: "Vous avez déjà accepté cette livraison." }, { status: 409 });
-      }
+      return NextResponse.json({ message: "Livraison introuvable ou non disponible." }, { status: 404 });
+    }
+    if (delivery.driverId && delivery.driverId !== session.user.id) {
+      return NextResponse.json({ message: "Cette livraison a déjà été acceptée." }, { status: 409 });
+    }
+    if (delivery.driverId === session.user.id) {
+      return NextResponse.json({ message: "Vous avez déjà accepté cette livraison." }, { status: 409 });
+    }
+    if (delivery.status !== "PENDING") {
       return NextResponse.json({ message: "Livraison introuvable ou non disponible." }, { status: 404 });
     }
 
-    const [updatedDelivery] = await prisma.$transaction([
-      prisma.delivery.update({
-        where: { id: delivery.id },
+    const updatedDelivery = await prisma.$transaction(async (tx) => {
+      const accepted = await tx.delivery.updateMany({
+        where: { id: delivery.id, status: "PENDING", driverId: null },
         data: { driverId: session.user.id, status: "ASSIGNED" }
-      }),
-      prisma.user.update({
-        where: { id: session.user.id },
-        data: { driverStatus: "ON_DELIVERY" }
-      }),
-      prisma.order.update({
-        where: { id: delivery.orderId },
-        data: { status: "DRIVER_ASSIGNED" }
-      })
-    ]);
+      });
+      if (accepted.count !== 1) throw new Error("DELIVERY_ALREADY_ACCEPTED");
+      await tx.user.update({ where: { id: session.user.id }, data: { driverStatus: "ON_DELIVERY" } });
+      await tx.order.update({ where: { id: delivery.orderId }, data: { status: "DRIVER_ASSIGNED" } });
+      return tx.delivery.findUniqueOrThrow({ where: { id: delivery.id } });
+    });
 
     return NextResponse.json({ delivery: updatedDelivery, message: "Livraison acceptée." });
   } catch (error) {
+    if (error instanceof Error && error.message === "DELIVERY_ALREADY_ACCEPTED") {
+      return NextResponse.json({ message: "Cette livraison a déjà été acceptée." }, { status: 409 });
+    }
     if (process.env.NODE_ENV !== "production") console.warn("[DalleUp] POST accept delivery", error);
     return NextResponse.json({ message: "Impossible d'accepter la livraison." }, { status: 503 });
   }
