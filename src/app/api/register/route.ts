@@ -123,9 +123,12 @@ export async function POST(request: Request) {
     }
 
     if (code === "P2002") return NextResponse.json({ message: "Cet email est déjà utilisé." }, { status: 409 });
+    const safeDetail = detail
+      ? detail.replace(/@[\w\-.]+\.\w+/g, "[host]").replace(/password=[^\s&]+/gi, "password=[redacted]")
+      : null;
     const payload = process.env.NODE_ENV !== "production"
-      ? { message: "Impossible de créer le compte pour le moment. Réessayez plus tard.", debug: { name, code } }
-      : { message: "Impossible de créer le compte pour le moment. Réessayez plus tard." };
+      ? { message: "Impossible de créer le compte pour le moment. Réessayez plus tard.", debug: { name, code, detail: safeDetail } }
+      : { message: "Impossible de créer le compte pour le moment. Réessayez plus tard.", code, detail: safeDetail };
     return NextResponse.json(payload, { status: 500 });
   }
 }
