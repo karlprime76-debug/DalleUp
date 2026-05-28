@@ -69,10 +69,12 @@ export async function POST(request: Request) {
         phone: phone || null,
         passwordHash,
         role: requestedRole as typeof allowedPublicRoles[number],
-        vehicleType: vehicleType || null,
-        city: city || null,
       };
-      if (requestedRole === "DELIVERY_DRIVER") userData.driverStatus = driverStatus;
+      if (requestedRole === "DELIVERY_DRIVER") {
+        userData.driverStatus = driverStatus;
+        userData.vehicleType = vehicleType;
+        if (city) userData.city = city;
+      }
 
       const createdUser = await tx.user.create({
         data: userData,
