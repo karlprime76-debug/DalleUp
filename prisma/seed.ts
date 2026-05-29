@@ -151,8 +151,8 @@ async function main() {
     await prisma.restaurantCategory.upsert({ where: { name }, update: {}, create: { name } });
   }
 
-  const starterPlan = await prisma.billingPlan.upsert({ where: { name: "Starter" }, update: { isActive: true }, create: { name: "Starter", description: "Plan de démarrage avec commission standard.", monthlyFee: 0, commissionRate: 15, interval: BillingInterval.MONTHLY } });
-  const premiumPlan = await prisma.billingPlan.upsert({ where: { name: "Premium" }, update: { isActive: true }, create: { name: "Premium", description: "Plan premium avec commission réduite.", monthlyFee: 15000, commissionRate: 12, interval: BillingInterval.MONTHLY } });
+  const starterPlan = await prisma.billingPlan.upsert({ where: { name: "Starter" }, update: { isActive: true }, create: { code: "FREE", name: "Starter", description: "Plan de démarrage avec commission standard.", price: 0, currency: "XOF", durationDays: 30, monthlyFee: 0, commissionRate: 15, interval: BillingInterval.MONTHLY } });
+  const premiumPlan = await prisma.billingPlan.upsert({ where: { name: "Premium" }, update: { isActive: true }, create: { code: "PREMIUM", name: "Premium", description: "Plan premium avec commission réduite.", price: 15000, currency: "XOF", durationDays: 30, monthlyFee: 15000, commissionRate: 12, interval: BillingInterval.MONTHLY } });
 
   for (const seed of restaurants) {
     const owner = await prisma.user.upsert({

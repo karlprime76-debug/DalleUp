@@ -37,48 +37,91 @@ export async function POST(request: Request) {
     }
 
     const invoice = asRecord(payload.invoice);
-    const customData = asRecord(payload.custom_data);
     const status = asString(payload.status)?.toLowerCase();
     const token = asString(invoice.token) ?? asString(payload.token);
     const totalAmount = asNumber(payload.total_amount ?? invoice.total_amount);
-    const orderId = asString(customData.orderId);
 
-    if (!orderId || !token) return NextResponse.json({ message: "Données PayDunya incomplètes." }, { status: 400 });
+    if (!token) return NextResponse.json({ message: "Token PayDunya manquant." }, { status: 400 });
 
-    const order = await prisma.order.findUnique({ where: { id: orderId }, include: { payment: true } });
-    if (!order) return NextResponse.json({ message: "Commande introuvable." }, { status: 404 });
+    const payment = await prisma.payment.findFirst({ where: { providerToken: token }, include: { order: true } });
+    if (!payment) return NextResponse.json({ message: "Paiement introuvable." }, { status: 404 });
 
-    if (Number.isFinite(totalAmount) && totalAmount !== order.total) {
+    if (Number.isFinite(totalAmount) && totalAmount !== payment.amount) {
       return NextResponse.json({ message: "Montant invalide." }, { status: 400 });
     }
 
     // Idempotence
-    if (order.payment?.status === "PAID") {
+    if (payment.status === "PAID") {
       return NextResponse.json({ ok: true, status: "completed" });
     }
 
     const nextPaymentStatus = status === "completed" ? "PAID" : status === "failed" || status === "cancelled" || status === "canceled" ? "FAILED" : "PENDING";
 
     if (nextPaymentStatus === "PAID") {
-      await prisma.$transaction([
-        prisma.payment.update({
-          where: { orderId: order.id },
-          data: { status: "PAID", paidAt: new Date(), raw: payload as unknown as Parameters<typeof prisma.payment.update>[0]["data"]["raw"] },
-        }),
-        prisma.order.update({
-          where: { id: order.id },
-          data: { status: "PAID_WAITING_RESTAURANT", paymentStatus: "PAID", paidAt: new Date() },
-        }),
-        prisma.orderSplit.update({
-          where: { orderId: order.id },
-          data: { status: "PENDING" },
-        }),
-      ]);
+      if (payment.purpose === "RESTAURANT_SUBSCRIPTION") {
+        await prisma.$transaction([
+          prisma.payment.update({
+            where: { id: payment.id },
+            data: { status: "PAID", paidAt: new Date(), raw: payload as unknown as Parameters<typeof prisma.payment.update>[0]["data"]["raw"] },
+          }),
+          prisma.restaurantSubscription.update({
+            where: { paymentId: payment.id },
+            data: { status: "ACTIVE", startsAt: new Date() },
+          }),
+        ]);
+        const subscription = await prisma.restaurantSubscription.findUnique({ where: { paymentId: payment.id }, include: { plan: true } });
+        if (subscription?.plan) {
+          const endsAt = new Date();
+          endsAt.setDate(endsAt.getDate() + (subscription.plan.durationDays || 30));
+          await prisma.restaurant.update({
+            where: { id: payment.restaurantId! },
+            data: {
+              currentPlanCode: subscription.plan.code,
+              isSponsored: subscription.plan.code === "SPONSORED" || subscription.plan.code === "ENTERPRISE",
+              sponsoredUntil: endsAt,
+              isFeatured: subscription.plan.code === "PREMIUM" || subscription.plan.code === "ENTERPRISE",
+              featuredUntil: endsAt,
+              priorityScore: subscription.plan.code === "FREE" ? 0 : subscription.plan.code === "PREMIUM" ? 10 : subscription.plan.code === "SPONSORED" ? 20 : subscription.plan.code === "ENTERPRISE" ? 30 : 0,
+            },
+          });
+          if (subscription.plan.code === "SPONSORED" || subscription.plan.code === "ENTERPRISE") {
+            await prisma.restaurantPlacement.create({
+              data: { restaurantId: payment.restaurantId!, subscriptionId: subscription.id, type: "SPONSORED_LISTING", startsAt: new Date(), endsAt },
+            });
+          }
+          if (subscription.plan.code === "PREMIUM" || subscription.plan.code === "ENTERPRISE") {
+            await prisma.restaurantPlacement.create({
+              data: { restaurantId: payment.restaurantId!, subscriptionId: subscription.id, type: "HOME_FEATURED", startsAt: new Date(), endsAt },
+            });
+          }
+        }
+      } else {
+        await prisma.$transaction([
+          prisma.payment.update({
+            where: { id: payment.id },
+            data: { status: "PAID", paidAt: new Date(), raw: payload as unknown as Parameters<typeof prisma.payment.update>[0]["data"]["raw"] },
+          }),
+          prisma.order.update({
+            where: { id: payment.orderId! },
+            data: { status: "PAID_WAITING_RESTAURANT" as import("@prisma/client").OrderStatus, paymentStatus: "PAID", paidAt: new Date() },
+          }),
+          prisma.orderSplit.update({
+            where: { orderId: payment.orderId! },
+            data: { status: "PENDING" as import("@prisma/client").PayoutStatus },
+          }),
+        ]);
+      }
     } else if (nextPaymentStatus === "FAILED") {
       await prisma.payment.update({
-        where: { orderId: order.id },
+        where: { id: payment.id },
         data: { status: "FAILED", failedAt: new Date(), raw: payload as unknown as Parameters<typeof prisma.payment.update>[0]["data"]["raw"] },
       });
+      if (payment.purpose === "RESTAURANT_SUBSCRIPTION") {
+        await prisma.restaurantSubscription.updateMany({
+          where: { paymentId: payment.id },
+          data: { status: "FAILED" as import("@prisma/client").SubscriptionStatus },
+        });
+      }
     }
 
     return NextResponse.json({ ok: true, status: nextPaymentStatus.toLowerCase() });

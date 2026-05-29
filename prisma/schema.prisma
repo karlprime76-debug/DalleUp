@@ -49,6 +49,25 @@ enum PaymentMethod {
   MOCK
 }
 
+enum PaymentPurpose {
+  ORDER_PAYMENT
+  RESTAURANT_SUBSCRIPTION
+}
+
+enum PayoutMethod {
+  MTN_MONEY
+  MOOV_MONEY
+  PAYDUNYA
+  MANUAL
+}
+
+enum RestaurantPlacementType {
+  HOME_FEATURED
+  SPONSORED_LISTING
+  TRENDING_DISHES
+  SEARCH_PRIORITY
+}
+
 enum DeliveryStatus {
   PENDING
   ASSIGNED
@@ -81,9 +100,12 @@ enum BillingInterval {
 
 enum SubscriptionStatus {
   TRIALING
+  PENDING_PAYMENT
   ACTIVE
   PAST_DUE
+  EXPIRED
   CANCELLED
+  FAILED
 }
 
 enum InvoiceStatus {
@@ -204,6 +226,12 @@ model Restaurant {
   minDelayMin Int                @default(20)
   maxDelayMin Int                @default(40)
   isPopular   Boolean            @default(false)
+  currentPlanCode String?
+  isSponsored   Boolean          @default(false)
+  sponsoredUntil DateTime?
+  isFeatured    Boolean          @default(false)
+  featuredUntil DateTime?
+  priorityScore Int              @default(0)
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
   owner       User               @relation(fields: [ownerId], references: [id])
@@ -215,6 +243,7 @@ model Restaurant {
   favorites   Favorite[]
   subscriptions RestaurantSubscription[]
   invoices    Invoice[]
+  placements  RestaurantPlacement[]
   billingNotifications BillingNotification[]
 }
 
@@ -319,31 +348,38 @@ model Address {
 }
 
 model Payment {
-  id            String        @id @default(cuid())
-  orderId       String        @unique
-  method        PaymentMethod @default(CASH_ON_DELIVERY)
+  id            String          @id @default(cuid())
+  orderId       String?         @unique
+  restaurantId  String?
+  purpose       PaymentPurpose  @default(ORDER_PAYMENT)
+  method        PaymentMethod   @default(CASH_ON_DELIVERY)
   provider      String?
   providerToken String?
   providerRef   String?
   checkoutUrl   String?
-  status        PaymentStatus @default(PENDING)
+  status        PaymentStatus   @default(PENDING)
   amount        Int
-  currency      String        @default("XOF")
+  currency      String          @default("XOF")
   paidAt        DateTime?
   failedAt      DateTime?
   raw           Json?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  order         Order         @relation(fields: [orderId], references: [id])
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  order         Order?          @relation(fields: [orderId], references: [id])
 }
 
 model BillingPlan {
   id             String                   @id @default(cuid())
+  code           String                   @unique
   name           String                   @unique
   description    String?
+  price          Int                      @default(0)
+  currency       String                   @default("XOF")
+  durationDays   Int                      @default(30)
   monthlyFee     Int                      @default(0)
   commissionRate Int                      @default(15)
   interval       BillingInterval          @default(MONTHLY)
+  features       Json?
   isActive       Boolean                  @default(true)
   createdAt      DateTime                 @default(now())
   updatedAt      DateTime                 @updatedAt
@@ -354,9 +390,11 @@ model RestaurantSubscription {
   id           String             @id @default(cuid())
   restaurantId String
   planId       String
-  status       SubscriptionStatus @default(ACTIVE)
-  startsAt     DateTime           @default(now())
+  paymentId    String?            @unique
+  status       SubscriptionStatus @default(PENDING_PAYMENT)
+  startsAt     DateTime?
   endsAt       DateTime?
+  autoRenew    Boolean            @default(false)
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
   restaurant   Restaurant         @relation(fields: [restaurantId], references: [id])
@@ -572,6 +610,8 @@ enum PayoutStatus {
   SUCCESS
   RETRY_REQUIRED
   MANUALLY_PAID
+  BLOCKED_MISSING_PAYOUT_ACCOUNT
+  BLOCKED_UNVERIFIED_PAYOUT_ACCOUNT
 }
 
 enum SettlementBatchStatus {
@@ -685,6 +725,8 @@ model OrderSplit {
   totalAmount               Int
   restaurantCommissionRate  Int
   restaurantCommissionAmount Int
+  deliveryCommissionRate    Int
+  deliveryCommissionAmount  Int
   restaurantAmount          Int
   courierAmount             Int
   dalleupAmount             Int
@@ -711,6 +753,9 @@ model PayoutAccount {
   accountName   String?
   isVerified    Boolean         @default(false)
   verifiedAt    DateTime?
+  rejectedAt    DateTime?
+  rejectionReason String?
+  adminNote     String?
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 
@@ -733,10 +778,25 @@ model PayoutTransfer {
   lastError       String?
   raw             Json?
   processedAt     DateTime?
+  manuallyPaidAt  DateTime?
+  manualNote      String?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   order           Order         @relation(fields: [orderId], references: [id])
 
   @@unique([orderId, beneficiaryType, beneficiaryId])
   @@index([status, createdAt])
+}
+
+model RestaurantPlacement {
+  id             String                   @id @default(cuid())
+  restaurantId   String
+  subscriptionId String?
+  type           RestaurantPlacementType
+  startsAt       DateTime                 @default(now())
+  endsAt         DateTime?
+  isActive       Boolean                  @default(true)
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+  restaurant     Restaurant               @relation(fields: [restaurantId], references: [id])
 }

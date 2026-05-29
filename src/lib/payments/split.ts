@@ -2,7 +2,8 @@ export type OrderSplitInput = {
   subtotalAmount: number;
   deliveryFeeAmount: number;
   serviceFeeAmount: number;
-  restaurantCommissionRate: number; // ex: 10 pour 10%
+  restaurantCommissionRate?: number; // ex: 15 pour 15%
+  deliveryCommissionRate?: number;     // ex: 10 pour 10%
 };
 
 export type OrderSplitResult = {
@@ -12,6 +13,8 @@ export type OrderSplitResult = {
   totalAmount: number;
   restaurantCommissionRate: number;
   restaurantCommissionAmount: number;
+  deliveryCommissionRate: number;
+  deliveryCommissionAmount: number;
   restaurantAmount: number;
   courierAmount: number;
   dalleupAmount: number;
@@ -21,13 +24,18 @@ export function calculateOrderSplit({
   subtotalAmount,
   deliveryFeeAmount,
   serviceFeeAmount,
-  restaurantCommissionRate,
+  restaurantCommissionRate = 15,
+  deliveryCommissionRate = 10,
 }: OrderSplitInput): OrderSplitResult {
-  const rate = Math.max(0, Math.min(100, restaurantCommissionRate));
-  const restaurantCommissionAmount = Math.round((subtotalAmount * rate) / 100);
+  const restRate = Math.max(0, Math.min(100, restaurantCommissionRate));
+  const delRate = Math.max(0, Math.min(100, deliveryCommissionRate));
+
+  const restaurantCommissionAmount = Math.round((subtotalAmount * restRate) / 100);
+  const deliveryCommissionAmount = Math.round((deliveryFeeAmount * delRate) / 100);
+
   const restaurantAmount = subtotalAmount - restaurantCommissionAmount;
-  const courierAmount = deliveryFeeAmount;
-  const dalleupAmount = restaurantCommissionAmount + serviceFeeAmount;
+  const courierAmount = deliveryFeeAmount - deliveryCommissionAmount;
+  const dalleupAmount = restaurantCommissionAmount + deliveryCommissionAmount + serviceFeeAmount;
   const totalAmount = subtotalAmount + deliveryFeeAmount + serviceFeeAmount;
 
   return {
@@ -35,8 +43,10 @@ export function calculateOrderSplit({
     deliveryFeeAmount,
     serviceFeeAmount,
     totalAmount,
-    restaurantCommissionRate: rate,
+    restaurantCommissionRate: restRate,
     restaurantCommissionAmount,
+    deliveryCommissionRate: delRate,
+    deliveryCommissionAmount,
     restaurantAmount,
     courierAmount,
     dalleupAmount,

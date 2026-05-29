@@ -48,6 +48,26 @@ export async function POST(request: Request) {
           orderBy: { createdAt: "desc" },
         });
 
+        if (!account) {
+          await prisma.payoutTransfer.upsert({
+            where: { orderId_beneficiaryType_beneficiaryId: { orderId: order.id, beneficiaryType: t.type, beneficiaryId: t.beneficiaryId } },
+            create: { orderId: order.id, beneficiaryType: t.type, beneficiaryId: t.beneficiaryId, amount: t.amount, currency: "XOF", provider, status: "BLOCKED_MISSING_PAYOUT_ACCOUNT" },
+            update: { status: "BLOCKED_MISSING_PAYOUT_ACCOUNT" },
+          });
+          orderResults.push({ type: t.type, ok: false, error: "Compte payout absent." });
+          continue;
+        }
+
+        if (!account.isVerified || account.rejectedAt) {
+          await prisma.payoutTransfer.upsert({
+            where: { orderId_beneficiaryType_beneficiaryId: { orderId: order.id, beneficiaryType: t.type, beneficiaryId: t.beneficiaryId } },
+            create: { orderId: order.id, beneficiaryType: t.type, beneficiaryId: t.beneficiaryId, payoutAccountId: account.id, amount: t.amount, currency: "XOF", provider, status: "BLOCKED_UNVERIFIED_PAYOUT_ACCOUNT" },
+            update: { status: "BLOCKED_UNVERIFIED_PAYOUT_ACCOUNT" },
+          });
+          orderResults.push({ type: t.type, ok: false, error: "Compte payout non vérifié ou rejeté." });
+          continue;
+        }
+
         const transfer = await prisma.payoutTransfer.upsert({
           where: {
             orderId_beneficiaryType_beneficiaryId: {
@@ -60,7 +80,7 @@ export async function POST(request: Request) {
             orderId: order.id,
             beneficiaryType: t.type,
             beneficiaryId: t.beneficiaryId,
-            payoutAccountId: account?.id ?? null,
+            payoutAccountId: account.id,
             amount: t.amount,
             currency: "XOF",
             provider,
@@ -74,9 +94,9 @@ export async function POST(request: Request) {
           currency: "XOF",
           beneficiaryType: t.type,
           beneficiaryId: t.beneficiaryId,
-          phone: account?.phone ?? undefined,
-          accountAlias: account?.accountAlias ?? undefined,
-          accountName: account?.accountName ?? undefined,
+          phone: account.phone ?? undefined,
+          accountAlias: account.accountAlias ?? undefined,
+          accountName: account.accountName ?? undefined,
           reference: transfer.id,
         });
 

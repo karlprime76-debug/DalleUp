@@ -39,7 +39,7 @@ export async function getAdminBillingData(): Promise<AdminBillingData> {
       prisma.invoice.findMany({ include: { restaurant: true }, orderBy: { createdAt: "desc" }, take: 40 })
     ]);
     if (!payments.length && !restaurants.length && !subscriptions.length && !invoices.length) return emptyBillingData();
-    const formattedPayments = payments.map((payment) => ({ id: payment.id, orderNumber: payment.order.orderNumber, restaurant: payment.order.restaurant.name, customer: payment.order.customer.name, method: payment.method, status: payment.status, amount: payment.amount, commission: Math.round(payment.amount * 0.15), providerRef: payment.providerRef ?? "—", paidAt: payment.paidAt?.toLocaleString("fr-FR") ?? "Non payé" }));
+    const formattedPayments = payments.map((payment) => ({ id: payment.id, orderNumber: payment.order?.orderNumber ?? "—", restaurant: payment.order?.restaurant?.name ?? "—", customer: payment.order?.customer?.name ?? "—", method: payment.method, status: payment.status, amount: payment.amount, commission: Math.round(payment.amount * 0.15), providerRef: payment.providerRef ?? "—", paidAt: payment.paidAt?.toLocaleString("fr-FR") ?? "Non payé" }));
     const plans = restaurants.map((restaurant) => {
       const restaurantRevenue = restaurant.orders.reduce((sum, order) => sum + order.total, 0);
       const subscription = subscriptions.find((item) => item.restaurantId === restaurant.id);
@@ -57,7 +57,7 @@ export async function getAdminBillingData(): Promise<AdminBillingData> {
       return row;
     };
     payments.forEach((payment) => {
-      const date = payment.paidAt ?? payment.order.createdAt;
+      const date = payment.paidAt ?? payment.order?.createdAt ?? new Date();
       const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
       const row = ensureReportRow(month, payment.status);
       row.orderRevenue += payment.amount;

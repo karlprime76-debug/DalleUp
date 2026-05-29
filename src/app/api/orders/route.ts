@@ -133,6 +133,8 @@ export async function POST(request: Request) {
             totalAmount: split.totalAmount,
             restaurantCommissionRate: split.restaurantCommissionRate,
             restaurantCommissionAmount: split.restaurantCommissionAmount,
+            deliveryCommissionRate: split.deliveryCommissionRate,
+            deliveryCommissionAmount: split.deliveryCommissionAmount,
             restaurantAmount: split.restaurantAmount,
             courierAmount: split.courierAmount,
             dalleupAmount: split.dalleupAmount,
