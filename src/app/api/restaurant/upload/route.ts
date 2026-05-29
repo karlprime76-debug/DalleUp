@@ -101,18 +101,30 @@ export async function POST(request: Request) {
     const ext = file.name.split(".").pop() ?? "jpg";
     const safeExt = ext.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 4) || "jpg";
     const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const safeRestaurantId = restaurant.id.replace(/[^a-zA-Z0-9-_]/g, "");
     let path = "";
-    if (type === "logo") path = `restaurants/${restaurant.id}/logo.${safeExt}`;
-    else if (type === "cover") path = `restaurants/${restaurant.id}/cover.${safeExt}`;
-    else if (type === "product" && productId) path = `restaurants/${restaurant.id}/products/${productId}.${safeExt}`;
-    else if (type === "product") path = `restaurants/${restaurant.id}/products/${unique}.${safeExt}`;
-    else path = `restaurants/${restaurant.id}/misc/${unique}.${safeExt}`;
+    if (type === "logo") path = `restaurants/${safeRestaurantId}/logo.${safeExt}`;
+    else if (type === "cover") path = `restaurants/${safeRestaurantId}/cover.${safeExt}`;
+    else if (type === "product" && productId) path = `restaurants/${safeRestaurantId}/products/${productId}.${safeExt}`;
+    else if (type === "product") path = `restaurants/${safeRestaurantId}/products/${unique}.${safeExt}`;
+    else path = `restaurants/${safeRestaurantId}/misc/${unique}.${safeExt}`;
 
     const supabase = createServerClient();
+
+    // Vérifier que le bucket existe
+    const { data: buckets, error: bucketError } = await supabase.storage.listBuckets();
+    const bucketExists = buckets?.some((b) => b.name === BUCKET) ?? false;
+    console.log("[DalleUp upload] bucket check", { bucket: BUCKET, bucketExists, bucketCount: buckets?.length ?? 0, bucketError: bucketError?.message ?? null });
+    if (bucketError || !bucketExists) {
+      console.error("[DalleUp upload] bucket missing", { bucket: BUCKET, bucketExists, bucketError: bucketError?.message ?? null });
+      return NextResponse.json({ ok: false, error: `Le bucket de stockage "${BUCKET}" n'existe pas. Créez-le dans Supabase Dashboard > Storage.` }, { status: 500 });
+    }
+
+    console.log("[DalleUp upload] path ready", { bucket: BUCKET, path });
     const { data: uploadData, error: uploadError } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: true, contentType: file.type });
     if (uploadError || !uploadData) {
       const { name, message, code } = safeError(uploadError ?? new Error("Supabase upload returned no data"));
-      console.error("[DalleUp upload] storage failed", { userId, restaurantId: restaurant.id, step: "supabase-upload", errorName: name, errorMessage: message, prismaCode: code, storageError: message });
+      console.error("[DalleUp upload] storage failed", { userId, restaurantId: restaurant.id, step: "supabase-upload", bucket: BUCKET, path, errorName: name, errorMessage: message, prismaCode: code, storageError: message });
       return NextResponse.json({ ok: false, error: `Stockage impossible : ${message}` }, { status: 500 });
     }
 
