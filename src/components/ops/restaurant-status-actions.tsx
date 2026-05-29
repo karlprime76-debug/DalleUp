@@ -20,13 +20,18 @@ export function RestaurantStatusActions({ restaurantId }: { restaurantId?: strin
     setMessage(null);
     try {
       const response = await fetch(`/api/admin/restaurants/${restaurantId}/status`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }) });
-      if (!response.ok) {
-        const payload = await response.json().catch(() => null);
-        setMessage(payload?.message ?? payload?.error ?? "Statut non modifié.");
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.ok) {
+        setMessage(payload?.error ?? payload?.message ?? `Statut non modifié (HTTP ${response.status}).`);
         return;
       }
-      setMessage(status === "APPROVED" ? "Restaurant approuvé et notification envoyée." : status === "SUSPENDED" ? "Restaurant suspendu." : "Statut mis à jour.");
+      const newStatus = payload?.restaurant?.status ?? status;
+      setMessage(newStatus === "APPROVED" ? `Restaurant approuvé (statut : ${newStatus}).` : newStatus === "SUSPENDED" ? `Restaurant suspendu (statut : ${newStatus}).` : `Statut mis à jour : ${newStatus}.`);
       router.refresh();
+      // Hard reload après un court délai pour forcer le rafraîchissement des Server Components et du cache
+      if (newStatus === "APPROVED" || newStatus === "SUSPENDED") {
+        setTimeout(() => { window.location.reload(); }, 1200);
+      }
     } catch {
       setMessage("Base indisponible : impossible de modifier le statut.");
     } finally {
