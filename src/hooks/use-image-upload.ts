@@ -21,8 +21,8 @@ export function useImageUpload() {
       const res = await fetch("/api/restaurant/upload", { method: "POST", body: formData });
       const data = await res.json().catch(() => null);
 
-      if (!res.ok) {
-        const message = data?.message ?? "Upload impossible.";
+      if (!res.ok || !data?.ok) {
+        const message = data?.error ?? data?.message ?? "Upload impossible.";
         setError(message);
         setUploading(false);
         return { url: "", error: message };

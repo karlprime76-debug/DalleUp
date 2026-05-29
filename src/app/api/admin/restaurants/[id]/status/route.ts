@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { requireAdminApi } from "@/lib/auth/guards";
 import { logAdminAction } from "@/lib/data/admin-audit";
 import { createNotification } from "@/lib/data/notifications";
@@ -17,6 +18,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const restaurant = await prisma.restaurant.findFirst({ where: { OR: [{ id }, { slug: id }] } });
     if (!restaurant) return NextResponse.json({ message: "Restaurant introuvable." }, { status: 404 });
     const updated = await prisma.restaurant.update({ where: { id: restaurant.id }, data: { status: status as typeof allowedStatuses[number] } });
+    revalidatePath("/restaurant/dashboard");
+    revalidatePath("/restaurant/pending");
+    revalidatePath(`/restaurants/${updated.slug}`);
     await logAdminAction({ adminId: admin.session.user.id, action: "RESTAURANT_STATUS_UPDATED", targetType: "RESTAURANT", targetId: updated.id, targetLabel: updated.name, metadata: { previousStatus: restaurant.status, status } });
 
     const notifType = status === "APPROVED" ? "VALIDATION_APPROVED" : status === "SUSPENDED" ? "VALIDATION_REJECTED" : "SYSTEM";

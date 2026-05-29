@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { signOut } from "next-auth/react";
 import { useCart } from "@/lib/cart/cart-store";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 export function AppHeader() {
   const { itemsCount } = useCart();
@@ -33,6 +34,7 @@ export function AppHeader() {
           </Link>
         </div>
         <div className="flex items-center gap-2">
+          <NotificationBell />
           <Link href="/app/cart" aria-label="Panier" className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-dalle-charcoal text-white shadow-sm transition hover:bg-black">
             <ShoppingBag size={22} />
             {itemsCount > 0 ? <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-dalle-lime px-1 text-[11px] font-black text-dalle-charcoal">{itemsCount}</span> : null}

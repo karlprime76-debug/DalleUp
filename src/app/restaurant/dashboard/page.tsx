@@ -13,6 +13,7 @@ import { getRestaurantMenuForOwner } from "@/lib/data/restaurant-menu";
 import { prisma } from "@/lib/db/prisma";
 import { restaurantNavSections } from "@/lib/navigation/restaurant-nav";
 import { formatPrice } from "@/lib/pricing/delivery";
+import { ValidationAlert } from "@/components/restaurant/validation-alert";
 
 const restaurantDashboardSelect = {
   id: true,
@@ -125,6 +126,7 @@ export default async function RestaurantDashboardPage() {
 
   return (
     <RestaurantShell title="Tableau de bord" sections={restaurantNavSections}>
+      <ValidationAlert />
       <Card className="mb-5 p-5">
         <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
           <div>

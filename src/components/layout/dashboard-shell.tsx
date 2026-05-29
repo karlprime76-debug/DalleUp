@@ -8,6 +8,7 @@ import { signOut } from "next-auth/react";
 import type { ReactNode } from "react";
 import { site } from "@/lib/site";
 import { useMobileDrawer } from "@/hooks/use-mobile-drawer";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 export type NavSection = { title: string; items: { href: string; label: string }[] };
 
@@ -90,7 +91,8 @@ export function DashboardShell({
         <button type="button" onClick={() => setMobileOpen(true)} aria-label="Ouvrir le menu de navigation" className="grid h-10 w-10 place-items-center rounded-2xl bg-neutral-100 transition hover:bg-neutral-200">
           <Menu size={20} className="text-dalle-charcoal" />
         </button>
-        <Link href={logoHref} aria-label="Retour au tableau de bord" className="text-xl font-black text-dalle-orange">{site.name}</Link>
+        <Link href={logoHref} aria-label="Retour au tableau de bord" className="flex-1 text-xl font-black text-dalle-orange">{site.name}</Link>
+        <NotificationBell />
       </div>
 
       {/* Mobile drawer */}
@@ -142,7 +144,8 @@ export function DashboardShell({
 
       <main className="lg:pl-64">
         <div className="sticky top-0 z-20 hidden items-center gap-3 border-b border-black/5 bg-white/90 px-8 py-4 backdrop-blur-xl lg:flex">
-          <h1 className="text-2xl font-black text-dalle-charcoal">{title}</h1>
+          <h1 className="flex-1 text-2xl font-black text-dalle-charcoal">{title}</h1>
+          <NotificationBell />
         </div>
         <div className="p-4 pb-[calc(96px+env(safe-area-inset-bottom))] lg:p-8 lg:pb-8">{children}</div>
       </main>
