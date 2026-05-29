@@ -52,6 +52,13 @@ enum PaymentMethod {
 enum PaymentPurpose {
   ORDER_PAYMENT
   RESTAURANT_SUBSCRIPTION
+  RESTAURANT_BOOST
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  FREE_DELIVERY
 }
 
 enum PayoutMethod {
@@ -245,6 +252,7 @@ model Restaurant {
   invoices    Invoice[]
   placements  RestaurantPlacement[]
   billingNotifications BillingNotification[]
+  promoCodes  PromoCode[]
 }
 
 model MenuCategory {
@@ -366,6 +374,7 @@ model Payment {
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
   order         Order?          @relation(fields: [orderId], references: [id])
+  subscription  RestaurantSubscription?
 }
 
 model BillingPlan {
@@ -380,6 +389,12 @@ model BillingPlan {
   commissionRate Int                      @default(15)
   interval       BillingInterval          @default(MONTHLY)
   features       Json?
+  priorityScore  Int                      @default(0)
+  allowPromoCodes Boolean               @default(false)
+  maxActivePromoCodes Int                @default(0)
+  allowSponsoredPlacement Boolean        @default(false)
+  allowFeaturedDishes Boolean            @default(false)
+  allowAdvancedStats Boolean             @default(false)
   isActive       Boolean                  @default(true)
   createdAt      DateTime                 @default(now())
   updatedAt      DateTime                 @updatedAt
@@ -399,6 +414,7 @@ model RestaurantSubscription {
   updatedAt    DateTime           @updatedAt
   restaurant   Restaurant         @relation(fields: [restaurantId], references: [id])
   plan         BillingPlan        @relation(fields: [planId], references: [id])
+  payment      Payment?           @relation(fields: [paymentId], references: [id])
   invoices     Invoice[]
 }
 
@@ -476,14 +492,37 @@ model Favorite {
 }
 
 model PromoCode {
-  id          String   @id @default(cuid())
-  code        String   @unique
-  description String?
-  discountPct Int?
-  discountAmount Int?
-  startsAt    DateTime?
-  endsAt      DateTime?
-  isActive    Boolean  @default(true)
+  id               String        @id @default(cuid())
+  restaurantId     String?
+  code             String        @unique
+  title            String?
+  description      String?
+  discountType     DiscountType?
+  discountValue    Int?
+  minOrderAmount   Int?
+  maxDiscountAmount Int?
+  usageLimit       Int?
+  usageCount       Int           @default(0)
+  perCustomerLimit Int?
+  startsAt         DateTime?
+  endsAt           DateTime?
+  isActive         Boolean       @default(true)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  restaurant       Restaurant?   @relation(fields: [restaurantId], references: [id])
+  usages           PromoCodeUsage[]
+
+  @@index([restaurantId, isActive])
+}
+
+model PromoCodeUsage {
+  id             String      @id @default(cuid())
+  promoCodeId    String
+  userId         String?
+  orderId        String?
+  discountAmount Int
+  usedAt         DateTime    @default(now())
+  promoCode      PromoCode   @relation(fields: [promoCodeId], references: [id])
 }
 
 model PlatformSettings {

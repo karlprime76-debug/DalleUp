@@ -151,8 +151,26 @@ async function main() {
     await prisma.restaurantCategory.upsert({ where: { name }, update: {}, create: { name } });
   }
 
-  const starterPlan = await prisma.billingPlan.upsert({ where: { name: "Starter" }, update: { isActive: true }, create: { code: "FREE", name: "Starter", description: "Plan de démarrage avec commission standard.", price: 0, currency: "XOF", durationDays: 30, monthlyFee: 0, commissionRate: 15, interval: BillingInterval.MONTHLY } });
-  const premiumPlan = await prisma.billingPlan.upsert({ where: { name: "Premium" }, update: { isActive: true }, create: { code: "PREMIUM", name: "Premium", description: "Plan premium avec commission réduite.", price: 15000, currency: "XOF", durationDays: 30, monthlyFee: 15000, commissionRate: 12, interval: BillingInterval.MONTHLY } });
+  const freePlan = await prisma.billingPlan.upsert({
+    where: { name: "Gratuit" },
+    update: { isActive: true, price: 0, priorityScore: 0, allowPromoCodes: false, maxActivePromoCodes: 0, allowSponsoredPlacement: false, allowFeaturedDishes: false, allowAdvancedStats: false },
+    create: { code: "FREE", name: "Gratuit", description: "Plan de démarrage gratuit. Visible normalement, pas de sponsoring ni codes promo.", price: 0, currency: "XOF", durationDays: 30, monthlyFee: 0, commissionRate: 15, interval: BillingInterval.MONTHLY, priorityScore: 0, allowPromoCodes: false, maxActivePromoCodes: 0, allowSponsoredPlacement: false, allowFeaturedDishes: false, allowAdvancedStats: false }
+  });
+  const premiumPlan = await prisma.billingPlan.upsert({
+    where: { name: "Premium" },
+    update: { isActive: true, price: 10000, priorityScore: 10, allowPromoCodes: true, maxActivePromoCodes: 3, allowSponsoredPlacement: false, allowFeaturedDishes: false, allowAdvancedStats: true },
+    create: { code: "PREMIUM", name: "Premium", description: "Badge Premium, statistiques avancées et codes promo jusqu’à 3 actifs.", price: 10000, currency: "XOF", durationDays: 30, monthlyFee: 10000, commissionRate: 12, interval: BillingInterval.MONTHLY, priorityScore: 10, allowPromoCodes: true, maxActivePromoCodes: 3, allowSponsoredPlacement: false, allowFeaturedDishes: false, allowAdvancedStats: true }
+  });
+  const _sponsoredPlan = await prisma.billingPlan.upsert({
+    where: { name: "Sponsorisé" },
+    update: { isActive: true, price: 20000, priorityScore: 50, allowPromoCodes: true, maxActivePromoCodes: 8, allowSponsoredPlacement: true, allowFeaturedDishes: true, allowAdvancedStats: true },
+    create: { code: "SPONSORED", name: "Sponsorisé", description: "Restaurant sponsorisé, mise en avant accueil, priorité recherche, codes promo avancés.", price: 20000, currency: "XOF", durationDays: 30, monthlyFee: 20000, commissionRate: 10, interval: BillingInterval.MONTHLY, priorityScore: 50, allowPromoCodes: true, maxActivePromoCodes: 8, allowSponsoredPlacement: true, allowFeaturedDishes: true, allowAdvancedStats: true }
+  });
+  const _enterprisePlan = await prisma.billingPlan.upsert({
+    where: { name: "Enterprise" },
+    update: { isActive: true, price: 35000, priorityScore: 100, allowPromoCodes: true, maxActivePromoCodes: 20, allowSponsoredPlacement: true, allowFeaturedDishes: true, allowAdvancedStats: true },
+    create: { code: "ENTERPRISE", name: "Enterprise", description: "Visibilité maximale, badge Partenaire DalleUp, sponsoring accueil, plats tendances, codes promo illimités.", price: 35000, currency: "XOF", durationDays: 30, monthlyFee: 35000, commissionRate: 8, interval: BillingInterval.MONTHLY, priorityScore: 100, allowPromoCodes: true, maxActivePromoCodes: 20, allowSponsoredPlacement: true, allowFeaturedDishes: true, allowAdvancedStats: true }
+  });
 
   for (const seed of restaurants) {
     const owner = await prisma.user.upsert({
@@ -179,7 +197,8 @@ async function main() {
       if (categoryId) await upsertMenuItem(restaurant.id, categoryId, item);
     }
 
-    const plan = seed.isPopular ? premiumPlan : starterPlan;
+    const plan = seed.isPopular ? premiumPlan : freePlan;
+    void _sponsoredPlan; void _enterprisePlan;
     const existingSubscription = await prisma.restaurantSubscription.findFirst({ where: { restaurantId: restaurant.id } });
     const subscription = existingSubscription ?? await prisma.restaurantSubscription.create({ data: { restaurantId: restaurant.id, planId: plan.id, status: SubscriptionStatus.ACTIVE } });
     await prisma.invoice.upsert({ where: { number: `INV-${seed.slug}-001` }, update: {}, create: { restaurantId: restaurant.id, subscriptionId: subscription.id, number: `INV-${seed.slug}-001`, status: InvoiceStatus.OPEN, amount: plan.monthlyFee, commission: 0 } });

@@ -13,6 +13,10 @@ export type AppRestaurant = {
   popular: boolean;
   image: string;
   description: string;
+  currentPlanCode?: string | null;
+  isSponsored?: boolean;
+  isFeatured?: boolean;
+  priorityScore?: number;
 };
 
 export type AppMenuItem = {
@@ -47,7 +51,11 @@ export function mapRestaurant(restaurant: RestaurantWithCategory): AppRestaurant
     deliveryFee: restaurant.deliveryFee,
     popular: restaurant.isPopular,
     image: restaurant.image || fallbackRestaurantImage,
-    description: restaurant.description
+    description: restaurant.description,
+    currentPlanCode: restaurant.currentPlanCode,
+    isSponsored: restaurant.isSponsored,
+    isFeatured: restaurant.isFeatured,
+    priorityScore: restaurant.priorityScore,
   };
 }
 

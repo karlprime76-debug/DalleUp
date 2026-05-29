@@ -31,7 +31,7 @@ export default async function AdminPromotionsPage() {
                   <p className="text-sm text-neutral-500">{promo.description ?? "Promotion DalleUp"}</p>
                 </div>
                 <Badge variant={promo.isActive ? "lime" : "neutral"}>{promo.isActive ? "Actif" : "Inactif"}</Badge>
-                <p className="text-sm font-bold text-neutral-600">{promo.discountPct ? `${promo.discountPct}%` : promo.discountAmount ? formatPrice(promo.discountAmount) : "—"}</p>
+                <p className="text-sm font-bold text-neutral-600">{promo.discountType === "PERCENTAGE" ? `${promo.discountValue}%` : promo.discountType === "FIXED_AMOUNT" ? formatPrice(promo.discountValue ?? 0) : promo.discountType === "FREE_DELIVERY" ? "Livraison gratuite" : "—"}</p>
                 <p className="text-sm text-neutral-500">{formatDate(promo.startsAt)} → {formatDate(promo.endsAt)}</p>
               </div>
             ))

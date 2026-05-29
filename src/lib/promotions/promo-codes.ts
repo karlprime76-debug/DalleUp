@@ -15,9 +15,15 @@ export async function validatePromoCode(input: { code?: string | null; subtotal:
   const now = input.now ?? new Date();
   if (promo.startsAt && promo.startsAt > now) return null;
   if (promo.endsAt && promo.endsAt < now) return null;
-  const pctDiscount = promo.discountPct ? Math.round(input.subtotal * (promo.discountPct / 100)) : 0;
-  const amountDiscount = promo.discountAmount ?? 0;
-  const discount = Math.max(0, Math.min(input.subtotal, pctDiscount + amountDiscount));
-  if (discount <= 0) return null;
+  let discount = 0;
+  if (promo.discountType === "PERCENTAGE" && promo.discountValue != null) {
+    discount = Math.round(input.subtotal * (promo.discountValue / 100));
+  } else if (promo.discountType === "FIXED_AMOUNT" && promo.discountValue != null) {
+    discount = promo.discountValue;
+  } else if (promo.discountType === "FREE_DELIVERY") {
+    discount = 0;
+  }
+  discount = Math.max(0, Math.min(input.subtotal, discount));
+  if (discount <= 0 && promo.discountType !== "FREE_DELIVERY") return null;
   return { code: promo.code, description: promo.description, discount, discountedSubtotal: input.subtotal - discount };
 }

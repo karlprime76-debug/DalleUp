@@ -73,23 +73,29 @@ export async function POST(request: Request) {
         if (subscription?.plan) {
           const endsAt = new Date();
           endsAt.setDate(endsAt.getDate() + (subscription.plan.durationDays || 30));
-          await prisma.restaurant.update({
-            where: { id: payment.restaurantId! },
-            data: {
-              currentPlanCode: subscription.plan.code,
-              isSponsored: subscription.plan.code === "SPONSORED" || subscription.plan.code === "ENTERPRISE",
-              sponsoredUntil: endsAt,
-              isFeatured: subscription.plan.code === "PREMIUM" || subscription.plan.code === "ENTERPRISE",
-              featuredUntil: endsAt,
-              priorityScore: subscription.plan.code === "FREE" ? 0 : subscription.plan.code === "PREMIUM" ? 10 : subscription.plan.code === "SPONSORED" ? 20 : subscription.plan.code === "ENTERPRISE" ? 30 : 0,
-            },
-          });
-          if (subscription.plan.code === "SPONSORED" || subscription.plan.code === "ENTERPRISE") {
+          await prisma.$transaction([
+            prisma.restaurant.update({
+              where: { id: payment.restaurantId! },
+              data: {
+                currentPlanCode: subscription.plan.code,
+                isSponsored: subscription.plan.allowSponsoredPlacement,
+                sponsoredUntil: subscription.plan.allowSponsoredPlacement ? endsAt : null,
+                isFeatured: subscription.plan.allowFeaturedDishes,
+                featuredUntil: subscription.plan.allowFeaturedDishes ? endsAt : null,
+                priorityScore: subscription.plan.priorityScore,
+              },
+            }),
+            prisma.restaurantSubscription.update({
+              where: { id: subscription.id },
+              data: { endsAt },
+            }),
+          ]);
+          if (subscription.plan.allowSponsoredPlacement) {
             await prisma.restaurantPlacement.create({
               data: { restaurantId: payment.restaurantId!, subscriptionId: subscription.id, type: "SPONSORED_LISTING", startsAt: new Date(), endsAt },
             });
           }
-          if (subscription.plan.code === "PREMIUM" || subscription.plan.code === "ENTERPRISE") {
+          if (subscription.plan.allowFeaturedDishes) {
             await prisma.restaurantPlacement.create({
               data: { restaurantId: payment.restaurantId!, subscriptionId: subscription.id, type: "HOME_FEATURED", startsAt: new Date(), endsAt },
             });

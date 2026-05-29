@@ -10,7 +10,7 @@ export async function getRestaurants(): Promise<AppRestaurant[]> {
     const restaurants = await prisma.restaurant.findMany({
       where: { status: "APPROVED", menuItems: { some: { isActive: true } } },
       include: { category: true },
-      orderBy: [{ isPopular: "desc" }, { rating: "desc" }]
+      orderBy: [{ priorityScore: "desc" }, { isPopular: "desc" }, { rating: "desc" }]
     });
     if (!restaurants.length) return [];
     return restaurants.map(mapRestaurant);

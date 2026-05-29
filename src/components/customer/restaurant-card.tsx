@@ -3,7 +3,14 @@ import Link from "next/link";
 import { Star } from "lucide-react";
 import { formatPrice } from "@/lib/pricing/delivery";
 
-export function RestaurantCard({ restaurant, hrefPrefix = "/app/restaurants" }: { restaurant: { id: string; name: string; category: string; status?: string; isOpen?: boolean; rating: number; delay: string; deliveryFee: number; popular: boolean; image: string; description: string }; hrefPrefix?: string }) {
+export function RestaurantCard({ restaurant, hrefPrefix = "/app/restaurants" }: { restaurant: { id: string; name: string; category: string; status?: string; isOpen?: boolean; rating: number; delay: string; deliveryFee: number; popular: boolean; image: string; description: string; currentPlanCode?: string | null; isSponsored?: boolean; isFeatured?: boolean; priorityScore?: number }; hrefPrefix?: string }) {
+  const planBadge = restaurant.isSponsored
+    ? { text: "Sponsorisé", className: "bg-dalle-orange text-white" }
+    : restaurant.currentPlanCode === "PREMIUM"
+      ? { text: "Premium", className: "bg-dalle-lime text-dalle-charcoal" }
+      : restaurant.currentPlanCode === "ENTERPRISE"
+        ? { text: "Partenaire", className: "bg-dalle-charcoal text-white" }
+        : null;
   return (
     <Link href={`${hrefPrefix}/${restaurant.id}`} className="group overflow-hidden rounded-[2rem] bg-white shadow-sm ring-1 ring-black/5 transition hover:-translate-y-1 hover:shadow-xl">
       <div className="relative h-44">
@@ -14,8 +21,8 @@ export function RestaurantCard({ restaurant, hrefPrefix = "/app/restaurants" }: 
             <span className="text-3xl font-black text-dalle-orange">{restaurant.name.charAt(0).toUpperCase()}</span>
           </div>
         )}
-        {restaurant.popular ? <span className="absolute left-4 top-4 rounded-full bg-dalle-orange px-3 py-1 text-xs font-black text-white">Sponsorisé</span> : null}
-        {restaurant.rating >= 4.5 && !restaurant.popular ? <span className="absolute left-4 top-4 rounded-full bg-dalle-lime px-3 py-1 text-xs font-black text-dalle-charcoal">Populaire</span> : null}
+        {planBadge ? <span className={`absolute left-4 top-4 rounded-full px-3 py-1 text-xs font-black ${planBadge.className}`}>{planBadge.text}</span> : null}
+        {restaurant.rating >= 4.5 && !planBadge ? <span className="absolute left-4 top-4 rounded-full bg-dalle-lime px-3 py-1 text-xs font-black text-dalle-charcoal">Populaire</span> : null}
         <span className={`absolute right-4 top-4 rounded-full px-3 py-1 text-xs font-black ${restaurant.isOpen === false ? "bg-neutral-900 text-white" : "bg-white/90 text-dalle-charcoal backdrop-blur-sm"}`}>{restaurant.isOpen === false ? "Fermé" : "Ouvert"}</span>
       </div>
       <div className="p-4">
