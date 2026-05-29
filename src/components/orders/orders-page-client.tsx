@@ -47,7 +47,7 @@ export function OrdersPageClient() {
             <Link key={order.id} href={`/app/orders/${order.id}`}>
               <Card className="p-5 transition hover:-translate-y-0.5 hover:shadow-lg">
                 <div className="flex justify-between gap-3"><b>{order.orderNumber}</b><OrderStatusBadge status={order.status} /></div>
-                <p className="mt-1 text-neutral-500">{order.restaurant?.name ?? "Restaurant DalleUp"} · {new Date(order.createdAt).toLocaleString("fr-FR")}</p>
+                <p className="mt-1 text-neutral-500">{order.restaurant?.name ?? "Restaurant"} · {new Date(order.createdAt).toLocaleString("fr-FR")}</p>
                 <p className="mt-1 text-xs font-bold text-dalle-orange">{clientDeliveryLabel(order)}</p>
                 <p className="mt-2 font-black text-dalle-orange">{formatPrice(order.total)}</p>
               </Card>

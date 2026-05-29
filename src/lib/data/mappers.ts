@@ -32,8 +32,8 @@ export type AppMenuItem = {
 type RestaurantWithCategory = Restaurant & { category?: RestaurantCategory | null };
 type MenuItemWithRestaurant = MenuItem & { restaurant?: Restaurant | null; category?: { name: string } | null };
 
-const fallbackRestaurantImage = "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=900&q=80";
-const fallbackMenuItemImage = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=900&q=80";
+const fallbackRestaurantImage = "";
+const fallbackMenuItemImage = "";
 
 export function mapRestaurant(restaurant: RestaurantWithCategory): AppRestaurant {
   return {

@@ -70,15 +70,15 @@ export default async function HomePage() {
             </div>
             <div className="relative min-h-[470px]">
               <div className="absolute inset-x-6 top-4 rotate-3 rounded-[2.5rem] bg-dalle-orange p-4 shadow-glow">
-                <div className="h-64 rounded-[2rem] bg-[url('https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=900&q=80')] bg-cover bg-center" />
+                <div className="h-64 rounded-[2rem] bg-dalle-charcoal bg-[url('/brand/dalleup-icon.svg')] bg-cover bg-center bg-no-repeat" />
                 <div className="mt-4 rounded-[2rem] bg-white p-4 text-dalle-charcoal">
-                  <div className="flex items-center justify-between"><h3 className="text-xl font-black">Burger Lab</h3><span className="flex items-center gap-1 font-black text-dalle-orange"><Star size={16} fill="currentColor" />4.6</span></div>
-                  <p className="text-sm text-neutral-500">Smash burger, frites, sauce lab</p>
+                  <div className="flex items-center justify-between"><h3 className="text-xl font-black">Votre restaurant prefere</h3><span className="flex items-center gap-1 font-black text-dalle-orange"><Star size={16} fill="currentColor" />4.8</span></div>
+                  <p className="text-sm text-neutral-500">Decouvrez les meilleurs plats de Cotonou</p>
                 </div>
               </div>
               <div className="absolute bottom-2 left-0 right-10 rounded-[2rem] bg-white p-5 text-dalle-charcoal shadow-2xl">
-                <p className="text-sm font-black text-dalle-orange">Commande en cours</p>
-                <h3 className="mt-1 text-2xl font-black">Votre repas arrive 🔥</h3>
+                <p className="text-sm font-black text-dalle-orange">Livraison express</p>
+                <h3 className="mt-1 text-2xl font-black">Commandez en 2 clics</h3>
                 <div className="mt-4 h-3 rounded-full bg-neutral-100"><div className="h-3 w-3/4 rounded-full bg-dalle-orange" /></div>
               </div>
             </div>

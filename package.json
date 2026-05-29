@@ -11,15 +11,11 @@
     "launch:audit:full": "tsx scripts/launch-audit.ts --full",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:seed": "tsx prisma/seed.ts",
     "postinstall": "prisma generate",
     "auth:reset": "tsx scripts/reset-accounts.ts",
     "auth:seed": "tsx scripts/seed-auth.ts",
     "auth:verify": "tsx scripts/verify-auth.ts",
     "auth:reset-and-seed": "tsx scripts/reset-and-seed-auth.ts"
-  },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@next-auth/prisma-adapter": "^1.0.7",

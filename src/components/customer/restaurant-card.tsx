@@ -7,7 +7,13 @@ export function RestaurantCard({ restaurant, hrefPrefix = "/app/restaurants" }: 
   return (
     <Link href={`${hrefPrefix}/${restaurant.id}`} className="group overflow-hidden rounded-[2rem] bg-white shadow-sm ring-1 ring-black/5 transition hover:-translate-y-1 hover:shadow-xl">
       <div className="relative h-44">
-        <Image src={restaurant.image} alt={restaurant.name} fill className="object-cover transition group-hover:scale-105" sizes="(max-width: 768px) 100vw, 33vw" />
+        {restaurant.image ? (
+          <Image src={restaurant.image} alt={restaurant.name} fill className="object-cover transition group-hover:scale-105" sizes="(max-width: 768px) 100vw, 33vw" />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-orange-50">
+            <span className="text-3xl font-black text-dalle-orange">{restaurant.name.charAt(0).toUpperCase()}</span>
+          </div>
+        )}
         {restaurant.popular ? <span className="absolute left-4 top-4 rounded-full bg-dalle-orange px-3 py-1 text-xs font-black text-white">Sponsorisé</span> : null}
         {restaurant.rating >= 4.5 && !restaurant.popular ? <span className="absolute left-4 top-4 rounded-full bg-dalle-lime px-3 py-1 text-xs font-black text-dalle-charcoal">Populaire</span> : null}
         <span className={`absolute right-4 top-4 rounded-full px-3 py-1 text-xs font-black ${restaurant.isOpen === false ? "bg-neutral-900 text-white" : "bg-white/90 text-dalle-charcoal backdrop-blur-sm"}`}>{restaurant.isOpen === false ? "Fermé" : "Ouvert"}</span>

@@ -54,13 +54,19 @@ export function TrendingDishCard({ item, rank }: TrendingDishCardProps) {
       aria-label={`${item.name} chez ${item.restaurantName ?? "Restaurant"} — ${formatPrice(item.price)}`}
     >
       <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-3xl">
-        <Image
-          src={item.image}
-          alt={item.name}
-          fill
-          className="object-cover transition group-hover:scale-105"
-          sizes="112px"
-        />
+        {item.image ? (
+          <Image
+            src={item.image}
+            alt={item.name}
+            fill
+            className="object-cover transition group-hover:scale-105"
+            sizes="112px"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-orange-50">
+            <span className="text-xl font-black text-dalle-orange">{item.name.charAt(0).toUpperCase()}</span>
+          </div>
+        )}
         {rank !== undefined && rank < 3 ? (
           <span className="absolute left-2 top-2 rounded-full bg-dalle-orange px-2 py-0.5 text-[10px] font-black text-white">
             #{rank + 1}

@@ -107,7 +107,7 @@ export function OrderDetailsClient({ id }: { id: string }) {
   return (
     <main className="px-4 py-6">
       <div className="mx-auto max-w-3xl">
-        <div className="flex items-start justify-between gap-4"><div><p className="font-black text-dalle-orange">Suivi commande</p><h1 className="text-3xl font-black text-dalle-charcoal">{remoteOrder.orderNumber}</h1><p className="mt-2 text-neutral-500">{remoteOrder.restaurant?.name ?? "Restaurant DalleUp"}</p></div><OrderStatusBadge status={remoteOrder.status} /></div>
+        <div className="flex items-start justify-between gap-4"><div><p className="font-black text-dalle-orange">Suivi commande</p><h1 className="text-3xl font-black text-dalle-charcoal">{remoteOrder.orderNumber}</h1><p className="mt-2 text-neutral-500">{remoteOrder.restaurant?.name ?? "Restaurant"}</p></div><OrderStatusBadge status={remoteOrder.status} /></div>
         {remoteOrder.status === "CANCELLED" ? (
           <Card className="mt-6 border-red-100 bg-red-50 p-5">
             <p className="font-black text-red-600">Commande annulée</p>
