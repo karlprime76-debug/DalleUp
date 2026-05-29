@@ -66,7 +66,11 @@ function getServerSnapshot() {
 function setMessage(message: string | null) {
   state = { ...state, message };
   emit();
-  if (message && isBrowser()) window.setTimeout(() => { state = { ...state, message: null }; emit(); }, 2200);
+}
+
+function clearMessage() {
+  state = { ...state, message: null };
+  emit();
 }
 
 export const cartStore = {
@@ -111,7 +115,8 @@ export const cartStore = {
   getItemsCount(items = state.items) {
     return items.reduce((total, item) => total + item.quantity, 0);
   },
-  setMessage
+  setMessage,
+  clearMessage,
 };
 
 export function useCart() {
@@ -123,6 +128,8 @@ export function useCart() {
     incrementItem: cartStore.incrementItem,
     decrementItem: cartStore.decrementItem,
     clearCart: cartStore.clearCart,
+    setMessage: cartStore.setMessage,
+    clearMessage: cartStore.clearMessage,
     subtotal: cartStore.getSubtotal(snapshot.items),
     deliveryFee: cartStore.getDeliveryFee(snapshot.items),
     total: cartStore.getTotal(snapshot.items),
