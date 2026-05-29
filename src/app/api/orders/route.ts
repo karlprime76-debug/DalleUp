@@ -8,6 +8,8 @@ import { orderConfirmationClient, newOrderRestaurant } from "@/lib/email/templat
 import { formatPrice } from "@/lib/pricing/delivery";
 import { getDeliveryFeeEstimate } from "@/lib/billing/delivery-fee";
 import { validatePromoCode } from "@/lib/promotions/promo-codes";
+import { calculateOrderSplit } from "@/lib/payments/split";
+import { getPlatformSettings } from "@/lib/settings/platform-settings";
 
 type OrderItemInput = {
   id?: string;
@@ -91,7 +93,17 @@ export async function POST(request: Request) {
     if (deliveryFee === null) {
       return NextResponse.json({ message: "Frais de livraison non calculables pour ce quartier." }, { status: 400 });
     }
-    const total = (promo?.discountedSubtotal ?? subtotal) + deliveryFee;
+    const settings = await getPlatformSettings();
+    const serviceFee = settings.platformServiceFee ?? 0;
+    const discountedSubtotal = promo?.discountedSubtotal ?? subtotal;
+    const total = discountedSubtotal + deliveryFee + serviceFee;
+    const commissionRate = restaurant.deliveryFee ?? settings.restaurantCommissionRate ?? 15;
+    const split = calculateOrderSplit({
+      subtotalAmount: discountedSubtotal,
+      deliveryFeeAmount: deliveryFee,
+      serviceFeeAmount: serviceFee,
+      restaurantCommissionRate: commissionRate,
+    });
 
     const order = await prisma.order.create({
       data: {
@@ -99,17 +111,34 @@ export async function POST(request: Request) {
         customerId: session.user.id,
         restaurantId: restaurant.id,
         addressId: address?.id,
+        status: "PENDING_PAYMENT",
         note: `${deliveryInstructions ? `${deliveryInstructions} · ` : ""}Téléphone: ${deliveryPhone}${promo ? ` · Code promo ${promo.code}: -${formatPrice(promo.discount)}` : ""}`,
-        subtotal,
+        subtotal: discountedSubtotal,
         deliveryFee,
+        serviceFee,
         total,
+        paymentStatus: "PENDING",
         items: { create: normalizedItems.map((item) => {
           const menuItem = menuItems.find((entry) => entry.id === item.menuItemId);
           const unitPrice = menuItem?.price ?? 0;
           return { menuItemId: item.menuItemId, quantity: item.quantity, unitPrice, total: unitPrice * item.quantity };
         }) },
-        payment: { create: { method: paymentMethod as typeof allowedPaymentMethods[number], status: "PENDING", amount: total } },
-        delivery: { create: { status: "PENDING", distanceKm: deliveryFee ? Math.round((deliveryFee / 200) * 10) / 10 : undefined } }
+        payment: { create: { method: paymentMethod as typeof allowedPaymentMethods[number], status: "PENDING", amount: total, currency: "XOF" } },
+        delivery: { create: { status: "PENDING", distanceKm: deliveryFee ? Math.round((deliveryFee / 200) * 10) / 10 : undefined } },
+        orderSplit: {
+          create: {
+            subtotalAmount: split.subtotalAmount,
+            deliveryFeeAmount: split.deliveryFeeAmount,
+            serviceFeeAmount: split.serviceFeeAmount,
+            totalAmount: split.totalAmount,
+            restaurantCommissionRate: split.restaurantCommissionRate,
+            restaurantCommissionAmount: split.restaurantCommissionAmount,
+            restaurantAmount: split.restaurantAmount,
+            courierAmount: split.courierAmount,
+            dalleupAmount: split.dalleupAmount,
+            status: "PENDING",
+          },
+        },
       },
       include: { restaurant: true, items: { include: { menuItem: true } }, payment: true, address: true, delivery: true }
     });
@@ -125,14 +154,16 @@ export async function POST(request: Request) {
       /* L'email ne bloque pas la commande */
     }
 
-    try {
-      const owner = await prisma.user.findUnique({ where: { id: restaurant.ownerId }, select: { email: true, name: true } });
-      if (owner?.email) {
-        const template = newOrderRestaurant(order.orderNumber, formatPrice(order.total), customer?.name || "Client");
-        await sendEmail({ to: owner.email, subject: template.subject, html: template.html, text: template.text });
+    if (paymentMethod === "CASH_ON_DELIVERY") {
+      try {
+        const owner = await prisma.user.findUnique({ where: { id: restaurant.ownerId }, select: { email: true, name: true } });
+        if (owner?.email) {
+          const template = newOrderRestaurant(order.orderNumber, formatPrice(order.total), customer?.name || "Client");
+          await sendEmail({ to: owner.email, subject: template.subject, html: template.html, text: template.text });
+        }
+      } catch {
+        /* L'email ne bloque pas la commande */
       }
-    } catch {
-      /* L'email ne bloque pas la commande */
     }
 
     return NextResponse.json({ order }, { status: 201 });

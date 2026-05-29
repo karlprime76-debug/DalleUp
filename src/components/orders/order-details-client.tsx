@@ -147,7 +147,7 @@ export function OrderDetailsClient({ id }: { id: string }) {
 
         {remoteOrder.payment?.status === "PENDING" && remoteOrder.status !== "CANCELLED" && (
           <Card className="mt-5 p-5 text-center">
-            <p className="text-sm text-neutral-500">Paiement à la réception via Mobile Money</p>
+            <p className="text-sm text-neutral-500">Le paiement est en attente. Confirmez pour envoyer la commande au restaurant.</p>
             <Button onClick={payNow} disabled={payLoading} className="mt-3 w-full">
               <CreditCard size={18} />
               {payLoading ? "Redirection…" : "Payer maintenant"}
