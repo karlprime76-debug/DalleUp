@@ -34,29 +34,47 @@ export async function requireRestaurantApi() {
   const session = await getServerSession(authOptions);
   if (!session?.user) return { response: NextResponse.json({ message: "Authentification requise." }, { status: 401 }) };
   if (session.user.role !== "RESTAURANT") return { response: NextResponse.json({ message: "Accès restaurant requis." }, { status: 403 }) };
-  const restaurant = await prisma.restaurant.findFirst({ where: { ownerId: session.user.id } });
-  if (!restaurant) return { response: NextResponse.json({ message: "Restaurant Prisma introuvable." }, { status: 404 }) };
-  if (restaurant.status === "PENDING") return { response: NextResponse.json({ message: "Votre compte restaurant est en attente de validation." }, { status: 403 }) };
-  if (restaurant.status === "SUSPENDED") return { response: NextResponse.json({ message: "Compte suspendu. Contactez le support." }, { status: 403 }) };
-  return { session, restaurant };
+  try {
+    const restaurant = await prisma.restaurant.findFirst({ where: { ownerId: session.user.id } });
+    if (!restaurant) return { response: NextResponse.json({ message: "Restaurant Prisma introuvable." }, { status: 404 }) };
+    if (restaurant.status === "PENDING") return { response: NextResponse.json({ message: "Votre compte restaurant est en attente de validation." }, { status: 403 }) };
+    if (restaurant.status === "SUSPENDED") return { response: NextResponse.json({ message: "Compte suspendu. Contactez le support." }, { status: 403 }) };
+    return { session, restaurant };
+  } catch (error) {
+    if (process.env.NODE_ENV !== "production") console.error("[requireRestaurantApi] DB error", error);
+    return { response: NextResponse.json({ message: "Indisponible. Base de données en cours de mise à jour. Réessayez dans quelques minutes." }, { status: 503 }) };
+  }
 }
 
 export async function requireRestaurantApiBasic() {
   const session = await getServerSession(authOptions);
   if (!session?.user) return { response: NextResponse.json({ message: "Authentification requise." }, { status: 401 }) };
   if (session.user.role !== "RESTAURANT") return { response: NextResponse.json({ message: "Accès restaurant requis." }, { status: 403 }) };
-  const restaurant = await prisma.restaurant.findFirst({ where: { ownerId: session.user.id } });
-  if (!restaurant) return { response: NextResponse.json({ message: "Restaurant Prisma introuvable." }, { status: 404 }) };
-  if (restaurant.status === "SUSPENDED") return { response: NextResponse.json({ message: "Compte suspendu. Contactez le support." }, { status: 403 }) };
-  return { session, restaurant };
+  try {
+    const restaurant = await prisma.restaurant.findFirst({ where: { ownerId: session.user.id } });
+    if (!restaurant) return { response: NextResponse.json({ message: "Restaurant Prisma introuvable." }, { status: 404 }) };
+    if (restaurant.status === "SUSPENDED") return { response: NextResponse.json({ message: "Compte suspendu. Contactez le support." }, { status: 403 }) };
+    return { session, restaurant };
+  } catch (error) {
+    if (process.env.NODE_ENV !== "production") console.error("[requireRestaurantApiBasic] DB error", error);
+    return { response: NextResponse.json({ message: "Indisponible. Base de données en cours de mise à jour. Réessayez dans quelques minutes." }, { status: 503 }) };
+  }
 }
 
 export async function requireRestaurant() {
   const session = await requireRole(["RESTAURANT"]);
-  const restaurant = await prisma.restaurant.findFirst({ where: { ownerId: session.user.id } });
-  if (!restaurant) redirect("/restaurant/onboarding");
-  if (restaurant.status === "SUSPENDED") redirect("/restaurant/suspended");
-  return { session, restaurant };
+  try {
+    const restaurant = await prisma.restaurant.findFirst({ where: { ownerId: session.user.id } });
+    if (!restaurant) redirect("/restaurant/onboarding");
+    if (restaurant.status === "SUSPENDED") redirect("/restaurant/suspended");
+    return { session, restaurant };
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) throw error;
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[requireRestaurant] DB error", error);
+    }
+    redirect("/restaurant/onboarding");
+  }
 }
 
 export async function requireApprovedRestaurant() {
