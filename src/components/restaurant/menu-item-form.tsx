@@ -21,9 +21,7 @@ export function MenuItemForm({ item }: { item?: { id?: string; name: string; des
       setMessage("Choisissez une image valide.");
       return;
     }
-    const extension = file.name.split(".").pop() || "jpg";
-    const safeName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
-    const result = await upload(file, `products/${safeName}`);
+    const result = await upload(file, "product", item?.id);
     if (result.url) setImageUrl(result.url);
     if (result.error) setMessage(result.error);
   }

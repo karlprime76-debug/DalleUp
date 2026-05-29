@@ -1,13 +1,27 @@
 import type { NextConfig } from "next";
 
+function getSupabaseHostname() {
+  try {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    if (url) return new URL(url).hostname;
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+const supabaseHostname = getSupabaseHostname();
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
         protocol: "https",
         hostname: "images.unsplash.com"
-      }
-      // TODO: ajouter le hostname Supabase Storage ici, ex: { protocol: "https", hostname: "xxxx.supabase.co" }
+      },
+      ...(supabaseHostname
+        ? [{ protocol: "https" as const, hostname: supabaseHostname }]
+        : [])
     ]
   },
   async headers() {

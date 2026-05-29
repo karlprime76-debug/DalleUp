@@ -34,7 +34,7 @@ export async function getRestaurantMenuForOwner(ownerId?: string): Promise<{ res
   try {
     if (ownerId && restaurant) {
       const items = await prisma.menuItem.findMany({ where: { restaurantId: restaurant.id }, include: { category: true }, orderBy: { createdAt: "desc" } });
-      return { restaurant, items: items.map((item) => ({ id: item.id, dbId: item.id, restaurantId: item.restaurantId, name: item.name, description: item.description, price: item.price, image: item.image ?? "/placeholder.svg", category: item.category?.name ?? "Menu", isActive: item.isActive })) };
+      return { restaurant, items: items.map((item) => ({ id: item.id, dbId: item.id, restaurantId: item.restaurantId, name: item.name, description: item.description, price: item.price, image: item.image || "/placeholder.svg", category: item.category?.name ?? "Menu", isActive: item.isActive })) };
     }
   } catch (error) {
     warnFallback("getRestaurantMenuForOwner", error);

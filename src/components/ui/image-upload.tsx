@@ -6,15 +6,17 @@ import { Camera } from "lucide-react";
 import { useImageUpload } from "@/hooks/use-image-upload";
 
 export function ImageUpload({
-  path,
+  type,
   currentUrl,
   onUpload,
   label = "Ajouter une photo",
+  productId,
 }: {
-  path: string;
+  type: "cover" | "logo" | "product";
   currentUrl?: string | null;
   onUpload: (url: string) => void;
   label?: string;
+  productId?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const { upload, uploading, error } = useImageUpload();
@@ -27,7 +29,7 @@ export function ImageUpload({
     const localPreview = URL.createObjectURL(file);
     setPreview(localPreview);
 
-    const result = await upload(file, path);
+    const result = await upload(file, type, productId);
     if (result.url) {
       onUpload(result.url);
       setPreview(result.url);

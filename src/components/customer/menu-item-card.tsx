@@ -40,7 +40,13 @@ export function MenuItemCard({ item, popular, restaurantName, restaurantOpen = t
   return (
     <div id={id} className="flex gap-4 rounded-[1.75rem] bg-white p-3 shadow-sm ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:shadow-lg">
       <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-3xl">
-        <Image src={item.image} alt={item.name} fill className="object-cover" sizes="112px" />
+        {item.image ? (
+          <Image src={item.image} alt={item.name} fill className="object-cover" sizes="112px" />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-orange-50">
+            <span className="text-xl font-black text-dalle-orange">{item.name.charAt(0).toUpperCase()}</span>
+          </div>
+        )}
       </div>
       <div className="min-w-0 flex-1">
         <div className="mb-2 flex flex-wrap gap-2">

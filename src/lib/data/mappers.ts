@@ -46,7 +46,7 @@ export function mapRestaurant(restaurant: RestaurantWithCategory): AppRestaurant
     delay: `${restaurant.minDelayMin}-${restaurant.maxDelayMin} min`,
     deliveryFee: restaurant.deliveryFee,
     popular: restaurant.isPopular,
-    image: restaurant.image ?? fallbackRestaurantImage,
+    image: restaurant.image || fallbackRestaurantImage,
     description: restaurant.description
   };
 }
@@ -63,6 +63,6 @@ export function mapMenuItem(item: MenuItemWithRestaurant): AppMenuItem {
     description: item.description,
     price: item.price,
     active: item.isActive,
-    image: item.image ?? fallbackMenuItemImage
+    image: item.image || fallbackMenuItemImage
   };
 }

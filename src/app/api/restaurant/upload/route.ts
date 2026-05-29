@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireRestaurantApi } from "@/lib/auth/guards";
+import { requireRestaurantApiBasic } from "@/lib/auth/guards";
 import { createServerClient } from "@/lib/supabase/server";
 
 const BUCKET = "restaurant-assets";
@@ -8,7 +8,7 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 
 export async function POST(request: Request) {
   try {
-    const result = await requireRestaurantApi();
+    const result = await requireRestaurantApiBasic();
     if ("response" in result) return result.response;
 
     const { restaurant } = result;
@@ -22,11 +22,14 @@ export async function POST(request: Request) {
     if (file.size > MAX_FILE_SIZE) return NextResponse.json({ message: "Fichier trop volumineux. Limite : 5 Mo." }, { status: 413 });
 
     const ext = file.name.split(".").pop() ?? "jpg";
+    const safeExt = ext.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 4) || "jpg";
+    const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     let path = "";
-    if (type === "logo") path = `restaurants/${restaurant.id}/logo.${ext}`;
-    else if (type === "cover") path = `restaurants/${restaurant.id}/cover.${ext}`;
-    else if (type === "product" && productId) path = `restaurants/${restaurant.id}/products/${productId}.${ext}`;
-    else path = `restaurants/${restaurant.id}/misc/${Date.now()}.${ext}`;
+    if (type === "logo") path = `restaurants/${restaurant.id}/logo.${safeExt}`;
+    else if (type === "cover") path = `restaurants/${restaurant.id}/cover.${safeExt}`;
+    else if (type === "product" && productId) path = `restaurants/${restaurant.id}/products/${productId}.${safeExt}`;
+    else if (type === "product") path = `restaurants/${restaurant.id}/products/${unique}.${safeExt}`;
+    else path = `restaurants/${restaurant.id}/misc/${unique}.${safeExt}`;
 
     const supabase = createServerClient();
     const { data, error } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: true, contentType: file.type });

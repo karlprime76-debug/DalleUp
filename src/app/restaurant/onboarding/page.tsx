@@ -59,9 +59,7 @@ export default function RestaurantOnboardingPage() {
     }
     setError(null);
     setNotice(null);
-    const extension = file.name.split(".").pop() || "jpg";
-    const safeName = `cover-${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
-    const result = await upload(file, `restaurants/covers/${safeName}`);
+    const result = await upload(file, "cover");
     if (result.url) setImageUrl(result.url);
     if (result.error) setNotice(result.error);
   }
