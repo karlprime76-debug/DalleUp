@@ -71,9 +71,10 @@ export async function POST(request: Request) {
           deliveryFee,
           minDelayMin,
           maxDelayMin,
-          status: "PENDING",
+          // Ne jamais régresser un statut APPROVED vers PENDING
+          status: existing.status === "APPROVED" ? "APPROVED" : "PENDING",
         },
-        select: { id: true }
+        select: { id: true, status: true }
       });
     } else {
       restaurant = await prisma.restaurant.create({

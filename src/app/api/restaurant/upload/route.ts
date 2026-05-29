@@ -82,6 +82,18 @@ export async function POST(request: Request) {
     const { data: publicUrlData } = supabase.storage.from(BUCKET).getPublicUrl(uploadData?.path ?? path);
     const url = publicUrlData.publicUrl;
 
+    // Mettre à jour le restaurant immédiatement pour couverture/logo
+    if ((type === "cover" || type === "logo") && restaurant) {
+      try {
+        await prisma.restaurant.update({
+          where: { id: restaurant.id },
+          data: { image: url },
+        });
+      } catch (dbError) {
+        safeLogError("db update image failed", dbError);
+      }
+    }
+
     if (process.env.NODE_ENV !== "production") {
       console.log("[upload] success", {
         userId: session.user.id,

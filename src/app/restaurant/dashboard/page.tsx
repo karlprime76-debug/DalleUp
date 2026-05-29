@@ -15,6 +15,8 @@ import { restaurantNavSections } from "@/lib/navigation/restaurant-nav";
 import { formatPrice } from "@/lib/pricing/delivery";
 import { ValidationAlert } from "@/components/restaurant/validation-alert";
 
+export const dynamic = "force-dynamic";
+
 const restaurantDashboardSelect = {
   id: true,
   name: true,

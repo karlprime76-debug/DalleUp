@@ -14,9 +14,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const { id } = await params;
     const body = await request.json();
     const status = String(body.status ?? "");
-    if (!allowedStatuses.includes(status as typeof allowedStatuses[number])) return NextResponse.json({ message: "Statut restaurant invalide." }, { status: 400 });
+    if (!allowedStatuses.includes(status as typeof allowedStatuses[number])) return NextResponse.json({ ok: false, error: "Statut restaurant invalide." }, { status: 400 });
     const restaurant = await prisma.restaurant.findFirst({ where: { OR: [{ id }, { slug: id }] } });
-    if (!restaurant) return NextResponse.json({ message: "Restaurant introuvable." }, { status: 404 });
+    if (!restaurant) return NextResponse.json({ ok: false, error: "Restaurant introuvable." }, { status: 404 });
     const updated = await prisma.restaurant.update({ where: { id: restaurant.id }, data: { status: status as typeof allowedStatuses[number] } });
     revalidatePath("/restaurant/dashboard");
     revalidatePath("/restaurant/pending");
@@ -28,10 +28,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const notifMessage = status === "APPROVED" ? `Votre restaurant "${updated.name}" a été approuvé. Vous pouvez maintenant recevoir des commandes.` : status === "SUSPENDED" ? `Votre restaurant "${updated.name}" a été suspendu. Contactez le support.` : `Le statut de votre restaurant "${updated.name}" est passé à ${status}.`;
     await createNotification({ userId: updated.ownerId, type: notifType, title: notifTitle, message: notifMessage, metadata: { restaurantId: updated.id, status } });
 
-    return NextResponse.json({ restaurant: updated });
+    return NextResponse.json({ ok: true, restaurant: updated, message: status === "APPROVED" ? "Restaurant approuvé." : status === "SUSPENDED" ? "Restaurant suspendu." : "Statut mis à jour." });
   } catch (error) {
     if (process.env.NODE_ENV !== "production") console.warn("[DalleUp admin fallback] restaurant status", error);
-    return NextResponse.json({ message: "Modification statut restaurant indisponible." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "Modification statut restaurant indisponible." }, { status: 503 });
   }
 }
 

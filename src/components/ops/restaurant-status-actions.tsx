@@ -22,9 +22,10 @@ export function RestaurantStatusActions({ restaurantId }: { restaurantId?: strin
       const response = await fetch(`/api/admin/restaurants/${restaurantId}/status`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }) });
       if (!response.ok) {
         const payload = await response.json().catch(() => null);
-        setMessage(payload?.message ?? "Statut non modifié.");
+        setMessage(payload?.message ?? payload?.error ?? "Statut non modifié.");
         return;
       }
+      setMessage(status === "APPROVED" ? "Restaurant approuvé et notification envoyée." : status === "SUSPENDED" ? "Restaurant suspendu." : "Statut mis à jour.");
       router.refresh();
     } catch {
       setMessage("Base indisponible : impossible de modifier le statut.");
