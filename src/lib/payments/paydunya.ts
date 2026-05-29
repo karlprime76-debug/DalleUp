@@ -30,7 +30,7 @@ export type PaydunyaCheckoutInput = {
   };
 };
 
-type PaydunyaResponse = {
+export type PaydunyaResponse = {
   response_code?: string;
   response_text?: string;
   token?: string;

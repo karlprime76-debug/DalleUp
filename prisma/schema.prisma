@@ -16,7 +16,9 @@ enum UserRole {
 }
 
 enum OrderStatus {
-  PENDING
+  CART
+  PENDING_PAYMENT
+  PAID_WAITING_RESTAURANT
   ACCEPTED
   PREPARING
   READY
@@ -25,12 +27,16 @@ enum OrderStatus {
   ON_THE_WAY
   DELIVERED
   CANCELLED
+  REFUND_REQUIRED
+  REFUNDED
 }
 
 enum PaymentStatus {
   PENDING
   PAID
   FAILED
+  CANCELLED
+  REFUND_REQUIRED
   REFUNDED
 }
 
@@ -39,6 +45,8 @@ enum PaymentMethod {
   MTN_MOMO
   MOOV_MONEY
   CARD
+  PAYDUNYA
+  MOCK
 }
 
 enum DeliveryStatus {
@@ -236,26 +244,35 @@ model MenuItem {
 }
 
 model Order {
-  id             String       @id @default(cuid())
-  orderNumber    String       @unique
+  id             String        @id @default(cuid())
+  orderNumber    String        @unique
   customerId     String
   restaurantId   String
   addressId      String?
-  status         OrderStatus  @default(PENDING)
+  status         OrderStatus   @default(PENDING_PAYMENT)
   subtotal       Int
   deliveryFee    Int
+  serviceFee     Int           @default(0)
   total          Int
   note           String?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  customer       User         @relation("CustomerOrders", fields: [customerId], references: [id])
-  restaurant     Restaurant   @relation(fields: [restaurantId], references: [id])
-  address        Address?     @relation(fields: [addressId], references: [id])
+  paymentStatus  PaymentStatus @default(PENDING)
+  payoutStatus   PayoutStatus?
+  paidAt         DateTime?
+  deliveredAt    DateTime?
+  cancelledAt    DateTime?
+  refundedAt     DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  customer       User          @relation("CustomerOrders", fields: [customerId], references: [id])
+  restaurant     Restaurant    @relation(fields: [restaurantId], references: [id])
+  address        Address?      @relation(fields: [addressId], references: [id])
   items          OrderItem[]
   delivery       Delivery?
   payment        Payment?
   review           Review?
   platformRevenue  PlatformRevenue?
+  orderSplit     OrderSplit?
+  payoutTransfers PayoutTransfer[]
 }
 
 model OrderItem {
@@ -302,14 +319,22 @@ model Address {
 }
 
 model Payment {
-  id          String        @id @default(cuid())
-  orderId     String        @unique
-  method      PaymentMethod @default(CASH_ON_DELIVERY)
-  status      PaymentStatus @default(PENDING)
-  amount      Int
-  providerRef String?
-  paidAt      DateTime?
-  order       Order         @relation(fields: [orderId], references: [id])
+  id            String        @id @default(cuid())
+  orderId       String        @unique
+  method        PaymentMethod @default(CASH_ON_DELIVERY)
+  provider      String?
+  providerToken String?
+  providerRef   String?
+  checkoutUrl   String?
+  status        PaymentStatus @default(PENDING)
+  amount        Int
+  currency      String        @default("XOF")
+  paidAt        DateTime?
+  failedAt      DateTime?
+  raw           Json?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  order         Order         @relation(fields: [orderId], references: [id])
 }
 
 model BillingPlan {
@@ -539,9 +564,14 @@ enum LedgerEntryStatus {
 
 enum PayoutStatus {
   REQUESTED
+  PENDING
   PROCESSING
   PAID
   FAILED
+  READY_TO_PAY
+  SUCCESS
+  RETRY_REQUIRED
+  MANUALLY_PAID
 }
 
 enum SettlementBatchStatus {
@@ -644,4 +674,69 @@ model SettlementBatch {
   totalPlatform    Int
   status           SettlementBatchStatus @default(OPEN)
   createdAt        DateTime            @default(now())
+}
+
+model OrderSplit {
+  id                        String      @id @default(cuid())
+  orderId                   String      @unique
+  subtotalAmount            Int
+  deliveryFeeAmount         Int
+  serviceFeeAmount          Int
+  totalAmount               Int
+  restaurantCommissionRate  Int
+  restaurantCommissionAmount Int
+  restaurantAmount          Int
+  courierAmount             Int
+  dalleupAmount             Int
+  status                    PayoutStatus @default(PENDING)
+  calculatedAt              DateTime     @default(now())
+  createdAt                 DateTime     @default(now())
+  updatedAt                 DateTime     @updatedAt
+  order                     Order        @relation(fields: [orderId], references: [id])
+}
+
+enum PayoutOwnerType {
+  RESTAURANT
+  COURIER
+}
+
+model PayoutAccount {
+  id            String          @id @default(cuid())
+  ownerType     PayoutOwnerType
+  ownerId       String
+  provider      String
+  method        String
+  phone         String?
+  accountAlias  String?
+  accountName   String?
+  isVerified    Boolean         @default(false)
+  verifiedAt    DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@unique([ownerType, ownerId, provider, method])
+}
+
+model PayoutTransfer {
+  id              String        @id @default(cuid())
+  orderId         String
+  beneficiaryType PayoutOwnerType
+  beneficiaryId   String
+  payoutAccountId String?
+  amount          Int
+  currency        String        @default("XOF")
+  provider        String
+  providerToken   String?
+  providerRef     String?
+  status          PayoutStatus  @default(PENDING)
+  attempts        Int           @default(0)
+  lastError       String?
+  raw             Json?
+  processedAt     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  order           Order         @relation(fields: [orderId], references: [id])
+
+  @@unique([orderId, beneficiaryType, beneficiaryId])
+  @@index([status, createdAt])
 }

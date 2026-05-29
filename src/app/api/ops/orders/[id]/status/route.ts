@@ -18,7 +18,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const existing = await prisma.order.findFirst({ where: { OR: [{ id }, { orderNumber: id }] }, include: { restaurant: true } });
     if (!existing) return NextResponse.json({ message: "Commande introuvable." }, { status: 404 });
     if (session.user.role === "RESTAURANT" && existing.restaurant.ownerId !== session.user.id) return NextResponse.json({ message: "Commande non autorisée." }, { status: 403 });
-    const order = await prisma.order.update({ where: { id: existing.id }, data: { status: status as typeof allowedStatuses[number] }, include: { restaurant: true } });
+    const order = await prisma.order.update({ where: { id: existing.id }, data: { status: status as import("@prisma/client").OrderStatus }, include: { restaurant: true } });
 
     const statusLabels: Record<string, string> = {
       ACCEPTED: "Commande acceptée",
