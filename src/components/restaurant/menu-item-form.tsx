@@ -19,11 +19,13 @@ export function MenuItemForm({ item }: { item?: { id?: string; name: string; des
     if (!file) return;
     if (!file.type.startsWith("image/")) {
       setMessage("Choisissez une image valide.");
+      event.target.value = "";
       return;
     }
     const result = await upload(file, "product", item?.id);
     if (result.url) setImageUrl(result.url);
     if (result.error) setMessage(result.error);
+    event.target.value = "";
   }
 
   async function submit(formData: FormData) {
