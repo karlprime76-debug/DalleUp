@@ -19,7 +19,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       where: { OR: [{ id }, { slug: id }] },
       include: {
         owner: { select: { id: true, name: true, email: true } },
-        menuItems: { select: { id: true, isActive: true } },
+        menuItems: { select: { id: true, name: true, image: true, isActive: true } },
         _count: { select: { menuItems: true, orders: true } },
       },
     });
@@ -45,6 +45,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       ownerName: restaurant.owner?.name ?? null,
       ownerEmail: restaurant.owner?.email ?? null,
       image: restaurant.image,
+      logo: null,
+      coverImageUrl: restaurant.image,
       address: restaurant.address,
       phone: restaurant.phone,
       deliveryFee: restaurant.deliveryFee,
@@ -55,6 +57,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       menuItemCount: restaurant._count.menuItems,
       activeMenuItemCount: restaurant.menuItems.filter((m) => m.isActive).length,
       orderCount: restaurant._count.orders,
+      menuItems: restaurant.menuItems.map((m) => ({ id: m.id, name: m.name, image: m.image, imageUrl: m.image, isAvailable: m.isActive })),
       recentNotifications: notifications,
     });
   } catch (error) {
