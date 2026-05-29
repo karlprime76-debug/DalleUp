@@ -56,9 +56,6 @@ export async function createPayout(
   return { ok: false, error: `Provider ${provider} non supporté.` };
 }
 
-export async function checkPayoutStatus(
-  _provider: PayoutProvider,
-  _providerRef: string
-): Promise<{ ok: boolean; status?: string; error?: string }> {
+export async function checkPayoutStatus(): Promise<{ ok: boolean; status?: string; error?: string }> {
   return { ok: true, status: "unknown" };
 }
