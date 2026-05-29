@@ -75,6 +75,12 @@ export async function POST(request: Request) {
     const productId = String(formData.get("productId") ?? "");
     uploadType = type;
 
+    console.log("[DalleUp upload] env check", {
+      hasSupabaseUrl: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
+      hasServiceKey: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
+      hasAnonKey: Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
+    });
+
     console.log("[DalleUp upload] start", {
       userId,
       role: user.role,
@@ -116,15 +122,15 @@ export async function POST(request: Request) {
     const bucketExists = buckets?.some((b) => b.name === BUCKET) ?? false;
     console.log("[DalleUp upload] bucket check", { bucket: BUCKET, bucketExists, bucketCount: buckets?.length ?? 0, bucketError: bucketError?.message ?? null });
     if (bucketError || !bucketExists) {
-      console.error("[DalleUp upload] bucket missing", { bucket: BUCKET, bucketExists, bucketError: bucketError?.message ?? null });
-      return NextResponse.json({ ok: false, error: `Le bucket de stockage "${BUCKET}" n'existe pas. Créez-le dans Supabase Dashboard > Storage.` }, { status: 500 });
+      console.error("[DalleUp upload] failed", { step: "bucket-check", userId, restaurantId: restaurant.id, bucket: BUCKET, bucketExists, bucketError: bucketError?.message ?? null });
+      return NextResponse.json({ ok: false, error: `Le bucket de stockage "${BUCKET}" n'existe pas ou est inaccessible. Vérifiez Supabase Dashboard > Storage et les variables d'environnement.` }, { status: 500 });
     }
 
     console.log("[DalleUp upload] path ready", { bucket: BUCKET, path });
     const { data: uploadData, error: uploadError } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: true, contentType: file.type });
     if (uploadError || !uploadData) {
       const { name, message, code } = safeError(uploadError ?? new Error("Supabase upload returned no data"));
-      console.error("[DalleUp upload] storage failed", { userId, restaurantId: restaurant.id, step: "supabase-upload", bucket: BUCKET, path, errorName: name, errorMessage: message, prismaCode: code, storageError: message });
+      console.error("[DalleUp upload] failed", { step: "supabase-upload", userId, restaurantId: restaurant.id, bucket: BUCKET, path, errorName: name, errorMessage: message, prismaCode: code, storageError: message });
       return NextResponse.json({ ok: false, error: `Stockage impossible : ${message}` }, { status: 500 });
     }
 
