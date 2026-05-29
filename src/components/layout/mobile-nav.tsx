@@ -33,7 +33,7 @@ export function MobileNav({ items }: { items: { href: string; label: string }[] 
       </button>
 
       <div
-        className={`fixed inset-0 ${open ? "pointer-events-auto" : "pointer-events-none"}`}
+        className={`fixed inset-0 z-50 ${open ? "pointer-events-auto" : "pointer-events-none"}`}
         aria-hidden={!open}
       >
         <div
@@ -44,7 +44,7 @@ export function MobileNav({ items }: { items: { href: string; label: string }[] 
           tabIndex={open ? 0 : -1}
         />
         <div
-          className={`absolute inset-x-0 top-14 border-b border-black/5 bg-white/95 px-4 py-4 shadow-lg backdrop-blur-xl transition-transform duration-300 ${open ? "translate-y-0" : "-translate-y-full"}`}
+          className={`absolute inset-x-0 top-14 border-b border-black/5 bg-white/95 px-4 py-4 shadow-lg backdrop-blur-xl transition-all duration-300 ${open ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"}`}
         >
           <nav className="grid gap-2">
             {items.map((item) => (

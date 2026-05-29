@@ -36,6 +36,10 @@ export async function SiteHeader() {
     ? (role === "CLIENT" ? clientNav : dashboardNav)
     : publicNav;
 
+  const mobileNav = session?.user
+    ? (role === "CLIENT" ? clientNav : [{ href: logoHref, label: "Tableau de bord" }, { href: "/app/profile", label: "Profil" }])
+    : publicNav;
+
   return (
     <header className="relative sticky top-0 z-40 border-b border-black/5 bg-white/90 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
@@ -47,7 +51,7 @@ export async function SiteHeader() {
         <nav className="hidden items-center gap-5 text-sm font-bold text-neutral-600 md:flex">
           {desktopNav.map((item) => <Link key={item.href} href={item.href} className="rounded-xl px-2 py-1 transition hover:text-dalle-orange">{item.label}</Link>)}
         </nav>
-        <MobileNav items={desktopNav} />
+        <MobileNav items={mobileNav} />
         <div className="flex items-center gap-2">
           {session?.user ? (
             <>
