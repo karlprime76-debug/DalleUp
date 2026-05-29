@@ -34,6 +34,8 @@ export function ImageUpload({
       onUpload(result.url);
       setPreview(result.url);
     }
+    // Réinitialiser l'input pour permettre de re-sélectionner le même fichier
+    e.target.value = "";
   }
 
   return (

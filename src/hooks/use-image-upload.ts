@@ -18,23 +18,33 @@ export function useImageUpload() {
       formData.append("type", type);
       if (productId) formData.append("productId", productId);
 
+      console.log("[useImageUpload] uploading", { type, fileName: file.name, fileSize: file.size, fileType: file.type });
+
       const res = await fetch("/api/restaurant/upload", { method: "POST", body: formData });
-      const data = await res.json().catch(() => null);
+      console.log("[useImageUpload] response status", res.status);
+
+      let data: { ok?: boolean; url?: string; error?: string; message?: string } | null = null;
+      try {
+        data = await res.json();
+      } catch (jsonError) {
+        console.warn("[useImageUpload] JSON parse failed", jsonError);
+      }
+      console.log("[useImageUpload] response data", data);
 
       if (!res.ok || !data?.ok) {
-        const message = data?.error ?? data?.message ?? "Upload impossible.";
+        const message = data?.error ?? data?.message ?? `Upload impossible (HTTP ${res.status}).`;
         setError(message);
-        setUploading(false);
         return { url: "", error: message };
       }
 
-      setUploading(false);
       return { url: data.url ?? "" };
-    } catch {
-      const message = "Upload impossible. Vérifiez votre connexion.";
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Upload impossible. Vérifiez votre connexion.";
+      console.error("[useImageUpload] network/error", message);
       setError(message);
-      setUploading(false);
       return { url: "", error: message };
+    } finally {
+      setUploading(false);
     }
   }, []);
 

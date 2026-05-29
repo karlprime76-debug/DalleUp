@@ -55,13 +55,18 @@ export default function RestaurantOnboardingPage() {
     if (!file) return;
     if (!file.type.startsWith("image/")) {
       setError("Choisissez une image valide.");
+      event.target.value = "";
       return;
     }
     setError(null);
     setNotice(null);
+    console.log("[onboarding] file selected", file.name, file.size, file.type);
     const result = await upload(file, "cover");
+    console.log("[onboarding] upload result", result);
     if (result.url) setImageUrl(result.url);
     if (result.error) setNotice(result.error);
+    // Réinitialiser l'input pour permettre de re-sélectionner le même fichier
+    event.target.value = "";
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
