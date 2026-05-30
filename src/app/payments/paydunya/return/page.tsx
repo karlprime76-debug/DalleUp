@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 function PaymentStatusContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const token = searchParams.get("token");
   const [status, setStatus] = useState<"checking" | "paid" | "pending" | "failed" | "error">("checking");
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -26,6 +27,9 @@ function PaymentStatusContent() {
         if (data.status === "completed") {
           setStatus("paid");
           setOrderId(data.orderId ?? null);
+          if (data.orderId) {
+            router.push(`/app/orders/${data.orderId}`);
+          }
         } else if (data.status === "failed") {
           setStatus("failed");
         } else {
@@ -37,7 +41,7 @@ function PaymentStatusContent() {
     }
     check();
     return () => { cancelled = true; };
-  }, [token]);
+  }, [token, router]);
 
   const title =
     status === "paid" ? "Paiement confirmé" :
