@@ -53,8 +53,8 @@ export async function POST(request: Request) {
     const deliveryZone = String(body.deliveryZone ?? "").trim();
     const deliveryPhone = String(body.deliveryPhone ?? "").trim();
     const deliveryInstructions = String(body.deliveryInstructions ?? "").trim();
-    if (deliveryAddress.length < 5) return NextResponse.json({ ok: false, error: "Adresse de livraison requise." }, { status: 400 });
     if (deliveryZone.length < 2) return NextResponse.json({ ok: false, error: "Quartier de livraison requis." }, { status: 400 });
+    if (deliveryAddress.length > 0 && deliveryAddress.length < 3) return NextResponse.json({ ok: false, error: "Adresse de livraison trop courte." }, { status: 400 });
     if (deliveryPhone.length < 6) return NextResponse.json({ ok: false, error: "Téléphone de livraison requis." }, { status: 400 });
 
     const restaurant = await prisma.restaurant.findFirst({ where: { OR: [{ id: restaurantId }, { slug: restaurantId }] } });
@@ -68,9 +68,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Certains plats ne sont pas disponibles." }, { status: 404 });
     }
 
-    const existingAddress = await prisma.address.findFirst({ where: { userId: session.user.id, street: deliveryAddress } });
+    const street = deliveryAddress || deliveryZone;
+    const existingAddress = await prisma.address.findFirst({ where: { userId: session.user.id, street } });
     const address = existingAddress ?? (await prisma.address.create({
-      data: { userId: session.user.id, label: "Livraison", street: deliveryAddress, city: "Cotonou", zone: deliveryZone, isDefault: false },
+      data: { userId: session.user.id, label: "Livraison", street, city: "Cotonou", zone: deliveryZone, isDefault: false },
     }));
 
     const subtotal = normalizedItems.reduce((sum, item) => {
@@ -89,7 +90,7 @@ export async function POST(request: Request) {
     const serviceFee = settings.platformServiceFee ?? 0;
     const discountedSubtotal = promo?.discountedSubtotal ?? subtotal;
     const total = discountedSubtotal + deliveryFee + serviceFee;
-    const commissionRate = restaurant.deliveryFee ?? settings.restaurantCommissionRate ?? 15;
+    const commissionRate = settings.restaurantCommissionRate ?? 15;
 
     const split = calculateOrderSplit({
       subtotalAmount: discountedSubtotal,
@@ -193,6 +194,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, order, checkoutUrl: checkout.checkoutUrl, token: checkout.token, message: "Commande créée. Redirection vers le paiement." }, { status: 201 });
   } catch (error) {
     console.error("[DalleUp create-payment] error", error);
-    return NextResponse.json({ ok: false, error: "Création de commande impossible." }, { status: 503 });
+    return NextResponse.json({ ok: false, error: "Création de commande impossible. Veuillez réessayer dans un instant." }, { status: 503 });
   }
 }

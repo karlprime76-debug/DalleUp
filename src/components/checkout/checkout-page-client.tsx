@@ -56,24 +56,21 @@ export function CheckoutPageClient() {
   const computedTotal = useMemo(() => subtotal + (computedDeliveryFee ?? 0) + serviceFee, [subtotal, computedDeliveryFee, serviceFee]);
   const hasAlcohol = items.some((item) => item.isAlcohol);
 
-  const addressOk = deliveryAddress.trim().length >= 5;
   const phoneOk = deliveryPhone.trim().length >= 6;
   const zoneOk = deliveryZone.trim().length > 0;
   const deliveryFeeOk = computedDeliveryFee !== null;
   const ageOk = !hasAlcohol || ageConfirmed;
-  const canOrder = addressOk && phoneOk && zoneOk && deliveryFeeOk && ageOk;
+  const canOrder = zoneOk && phoneOk && deliveryFeeOk && ageOk;
 
-  const validationMessage = !addressOk
-    ? "Renseignez votre adresse pour calculer la livraison."
-    : !zoneOk
-      ? "Sélectionnez un lieu de livraison dans la liste."
-      : !deliveryFeeOk
-        ? "Frais de livraison non disponibles pour ce lieu."
-        : !phoneOk
-          ? "Ajoutez un numéro de téléphone pour continuer."
-          : !ageOk
-            ? "Confirmez avoir l’âge légal requis."
-            : null;
+  const validationMessage = !zoneOk
+    ? "Sélectionnez un lieu de livraison dans la liste."
+    : !deliveryFeeOk
+      ? "Frais de livraison non disponibles pour ce lieu."
+      : !phoneOk
+        ? "Ajoutez un numéro de téléphone pour continuer."
+        : !ageOk
+          ? "Confirmez avoir l’âge légal requis."
+          : null;
 
   if (items.length === 0) return <main className="px-4 py-6"><div className="mx-auto max-w-3xl"><EmptyState title="Aucun article à payer" description="Votre panier est vide. Ajoutez un plat avant de passer au paiement." actionHref="/app/restaurants" actionLabel="Voir les restaurants" /></div></main>;
 
@@ -95,7 +92,7 @@ export function CheckoutPageClient() {
         items: items.map((item) => ({ menuItemId: item.id, quantity: item.quantity })),
         restaurantId: items[0]?.restaurantId,
         paymentMethod,
-        deliveryAddress,
+        deliveryAddress: deliveryAddress.trim() || deliveryZone,
         deliveryZone,
         deliveryPhone,
         deliveryInstructions,
@@ -112,7 +109,9 @@ export function CheckoutPageClient() {
           return;
         }
         const payload = (await orderResponse.json().catch(() => ({}))) as CreatePaymentResponse;
-        setMessage(payload.error ?? payload.message ?? "Commande impossible pour le moment.");
+        const errorText = payload.error ?? payload.message ?? "Commande impossible pour le moment.";
+        console.error("[DalleUp checkout] API error:", errorText, payload);
+        setMessage(errorText);
         setLoading(false);
         return;
       }
@@ -125,13 +124,15 @@ export function CheckoutPageClient() {
       }
       if (payload.checkoutUrl) {
         clearCart();
+        console.log("[DalleUp checkout] redirecting to", payload.checkoutUrl);
         window.location.href = payload.checkoutUrl;
         return;
       }
       // Fallback cash on delivery or mock without checkoutUrl
       clearCart();
       router.push(`/app/orders/${orderId}`);
-    } catch {
+    } catch (err) {
+      console.error("[DalleUp checkout] network/error:", err);
       setMessage("Commande impossible : vérifiez votre connexion puis réessayez.");
       setLoading(false);
     }
