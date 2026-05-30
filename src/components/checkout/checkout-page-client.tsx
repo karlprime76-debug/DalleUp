@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CreditCard, MapPin, Smartphone } from "lucide-react";
+import { CreditCard, MapPin, Smartphone, Navigation } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -30,6 +30,25 @@ type PromoResult = {
   message?: string;
 };
 
+type SavedAddressItem = {
+  id: string;
+  label: string;
+  addressText: string;
+  commune?: string;
+  neighborhood?: string;
+  landmarkText?: string;
+  instructions?: string;
+  phone?: string;
+  placeId?: string;
+};
+
+type NearbyPlace = {
+  id: string;
+  name: string;
+  type: string;
+  distance: number;
+};
+
 type CreatePaymentResponse = {
   ok: boolean;
   order?: { id: string; orderNumber: string };
@@ -55,12 +74,23 @@ export function CheckoutPageClient() {
   const [promoResult, setPromoResult] = useState<PromoResult | null>(null);
   const [promoValidating, setPromoValidating] = useState(false);
   const [settings, setSettings] = useState<SettingsPublic>({});
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddressItem[]>([]);
+  const [selectedSavedAddressId, setSelectedSavedAddressId] = useState<string | null>(null);
+  const [nearbyPlaces, setNearbyPlaces] = useState<NearbyPlace[]>([]);
+  const [landmarkQuery, setLandmarkQuery] = useState("");
+  const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
+  const [selectedPlaceName, setSelectedPlaceName] = useState("");
+  const [geoLoading, setGeoLoading] = useState(false);
 
   useEffect(() => {
     fetch("/api/settings/public")
       .then((r) => r.json().catch(() => ({})))
       .then((data) => setSettings(data))
       .catch(() => setSettings({}));
+    fetch("/api/user/saved-addresses")
+      .then((r) => r.json().catch(() => ({ addresses: [] })))
+      .then((data) => setSavedAddresses(data.addresses ?? []))
+      .catch(() => setSavedAddresses([]));
   }, []);
 
   const serviceFee = settings.platformServiceFee ?? 0;
@@ -70,8 +100,15 @@ export function CheckoutPageClient() {
   const computedTotal = useMemo(() => computedSubtotalAfterPromo + (computedDeliveryFee ?? 0) + serviceFee, [computedSubtotalAfterPromo, computedDeliveryFee, serviceFee]);
   const hasAlcohol = items.some((item) => item.isAlcohol);
 
-  const phoneOk = deliveryPhone.trim().length >= 6;
-  const zoneOk = deliveryZone.trim().length > 0;
+  const addressFromSaved = savedAddresses.find((a) => a.id === selectedSavedAddressId);
+  const effectiveZone = addressFromSaved?.commune ?? deliveryZone;
+  const effectiveAddress = addressFromSaved?.addressText ?? deliveryAddress;
+  const effectivePhone = addressFromSaved?.phone ?? deliveryPhone;
+  const effectiveInstructions = addressFromSaved?.instructions ?? deliveryInstructions;
+  const effectivePlaceId = selectedPlaceId ?? addressFromSaved?.placeId ?? null;
+
+  const phoneOk = (effectivePhone ?? "").trim().length >= 6;
+  const zoneOk = effectiveZone.trim().length > 0;
   const deliveryFeeOk = computedDeliveryFee !== null;
   const ageOk = !hasAlcohol || ageConfirmed;
   const canOrder = zoneOk && phoneOk && deliveryFeeOk && ageOk;
@@ -136,10 +173,12 @@ export function CheckoutPageClient() {
         items: items.map((item) => ({ menuItemId: item.id, quantity: item.quantity })),
         restaurantId: items[0]?.restaurantId,
         paymentMethod,
-        deliveryAddress: deliveryAddress.trim() || deliveryZone,
-        deliveryZone,
-        deliveryPhone,
-        deliveryInstructions,
+        deliveryAddress: effectiveAddress.trim() || effectiveZone,
+        deliveryZone: effectiveZone,
+        deliveryPhone: effectivePhone,
+        deliveryInstructions: effectiveInstructions,
+        savedAddressId: selectedSavedAddressId,
+        placeId: effectivePlaceId,
         promoCode,
       };
       const orderResponse = await fetch("/api/orders/create-payment", {
@@ -196,17 +235,83 @@ export function CheckoutPageClient() {
                 <div className="w-full">
                   <h2 className="font-black">Adresse de livraison</h2>
                   <div className="mt-3 grid gap-3">
+                    {savedAddresses.length > 0 ? (
+                      <div className="grid gap-2">
+                        <p className="text-sm font-bold text-neutral-600">Adresses enregistrées</p>
+                        <div className="flex flex-wrap gap-2">
+                          {savedAddresses.map((addr) => (
+                            <button
+                              key={addr.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedSavedAddressId(addr.id === selectedSavedAddressId ? null : addr.id);
+                                if (addr.commune) setDeliveryZone(addr.commune);
+                              }}
+                              className={addr.id === selectedSavedAddressId ? "rounded-2xl border-2 border-dalle-orange bg-orange-50 px-3 py-2 text-xs font-bold text-dalle-orange" : "rounded-2xl border border-black/5 bg-white px-3 py-2 text-xs font-bold text-neutral-600"}
+                            >
+                              {addr.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
                     <AddressAutocomplete
                       onSelect={(place) => {
                         setSelectedPlaceLabel(place.label);
                         setDeliveryZone(place.name);
+                        setSelectedSavedAddressId(null);
                       }}
                       placeholder="Quartier, ville ou lieu proche…"
                     />
                     {selectedPlaceLabel ? (
                       <p className="text-xs text-neutral-500">Lieu sélectionné : <span className="font-bold text-dalle-orange">{selectedPlaceLabel}</span></p>
                     ) : null}
-                    <Input value={deliveryAddress} onChange={(event) => setDeliveryAddress(event.target.value)} placeholder="Complément d’adresse : maison blanche, portail noir, étage…" />
+                    <Input value={deliveryAddress} onChange={(event) => { setDeliveryAddress(event.target.value); setSelectedSavedAddressId(null); }} placeholder="Complément d’adresse : maison blanche, portail noir, étage…" />
+                    <div className="grid gap-2">
+                      <div className="flex items-center gap-2">
+                        <Input value={landmarkQuery} onChange={(event) => setLandmarkQuery(event.target.value)} placeholder="Repère proche : pharmacie, carrefour, marché…" />
+                        <Button type="button" variant="outline" size="sm" onClick={() => {
+                          if (!landmarkQuery.trim()) return;
+                          fetch(`/api/places/search?q=${encodeURIComponent(landmarkQuery)}&commune=${encodeURIComponent(effectiveZone)}`)
+                            .then((r) => r.json().catch(() => ({ places: [] })))
+                            .then((data) => setNearbyPlaces(data.places ?? []))
+                            .catch(() => setNearbyPlaces([]));
+                        }}>
+                          Chercher
+                        </Button>
+                        <Button type="button" variant="outline" size="sm" onClick={() => {
+                          setGeoLoading(true);
+                          navigator.geolocation.getCurrentPosition(
+                            (pos) => {
+                              fetch(`/api/places/nearby?lat=${pos.coords.latitude}&lng=${pos.coords.longitude}&radius=2000`)
+                                .then((r) => r.json().catch(() => ({ places: [] })))
+                                .then((data) => setNearbyPlaces(data.places ?? []))
+                                .catch(() => setNearbyPlaces([]))
+                                .finally(() => setGeoLoading(false));
+                            },
+                            () => { setGeoLoading(false); setMessage("Géolocalisation indisponible."); },
+                            { timeout: 8000 }
+                          );
+                        }} disabled={geoLoading}>
+                          <Navigation size={14} />
+                        </Button>
+                      </div>
+                      {nearbyPlaces.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {nearbyPlaces.slice(0, 8).map((p) => (
+                            <button
+                              key={p.id}
+                              type="button"
+                              onClick={() => { setSelectedPlaceId(p.id); setSelectedPlaceName(p.name); setLandmarkQuery(p.name); }}
+                              className={p.id === selectedPlaceId ? "rounded-2xl border-2 border-dalle-orange bg-orange-50 px-2 py-1 text-xs font-bold text-dalle-orange" : "rounded-2xl border border-black/5 bg-white px-2 py-1 text-xs font-bold text-neutral-600"}
+                            >
+                              {p.name} {p.distance ? `(${p.distance}m)` : ""}
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                      {selectedPlaceName ? <p className="text-xs font-bold text-dalle-orange">Repère : {selectedPlaceName}</p> : null}
+                    </div>
                     <Input value={deliveryPhone} onChange={(event) => setDeliveryPhone(event.target.value)} placeholder="Téléphone de livraison" type="tel" />
                     <textarea value={deliveryInstructions} onChange={(event) => setDeliveryInstructions(event.target.value)} className="min-h-24 w-full rounded-3xl border border-black/5 bg-white px-5 py-4 text-sm font-semibold outline-none shadow-sm transition placeholder:text-neutral-400 focus:border-dalle-orange focus:ring-4 focus:ring-dalle-orange/10" placeholder="Instructions optionnelles : étage, portail, repère..." />
                   </div>

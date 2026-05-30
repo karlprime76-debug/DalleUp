@@ -53,6 +53,8 @@ export async function POST(request: Request) {
     const deliveryZone = String(body.deliveryZone ?? "").trim();
     const deliveryPhone = String(body.deliveryPhone ?? "").trim();
     const deliveryInstructions = String(body.deliveryInstructions ?? "").trim();
+    const savedAddressId = String(body.savedAddressId ?? "").trim() || null;
+    const placeId = String(body.placeId ?? "").trim() || null;
     if (deliveryZone.length < 2) return NextResponse.json({ ok: false, error: "Quartier de livraison requis." }, { status: 400 });
     if (deliveryAddress.length > 0 && deliveryAddress.length < 3) return NextResponse.json({ ok: false, error: "Adresse de livraison trop courte." }, { status: 400 });
     if (deliveryPhone.length < 6) return NextResponse.json({ ok: false, error: "Téléphone de livraison requis." }, { status: 400 });
@@ -114,7 +116,7 @@ export async function POST(request: Request) {
           deliveryFee,
           serviceFee,
           total,
-          note: `${deliveryInstructions ? `${deliveryInstructions} · ` : ""}Téléphone: ${deliveryPhone}${promo ? ` · Code promo ${promo.code}: -${promo.discount}` : ""}`,
+          note: `${deliveryInstructions ? `${deliveryInstructions} · ` : ""}Téléphone: ${deliveryPhone}${promo ? ` · Code promo ${promo.code}: -${promo.discount}` : ""}${savedAddressId ? ` · savedAddressId: ${savedAddressId}` : ""}${placeId ? ` · placeId: ${placeId}` : ""}`,
           paymentStatus: isOnline ? "PENDING" : "PAID",
           paidAt: isOnline ? null : new Date(),
           items: {

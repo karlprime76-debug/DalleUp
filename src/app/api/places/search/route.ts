@@ -8,10 +8,6 @@ export async function GET(request: Request) {
     const q = String(searchParams.get("q") ?? "").trim();
     const commune = String(searchParams.get("commune") ?? "").trim();
     const type = String(searchParams.get("type") ?? "").trim();
-    const nearLat = searchParams.get("nearLat");
-    const nearLng = searchParams.get("nearLng");
-    // nearLat/nearLng reserved for future distance sorting
-
     if (!q) {
       return NextResponse.json({ places: [] });
     }
