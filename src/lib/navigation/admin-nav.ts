@@ -18,6 +18,7 @@ export const adminNavSections = [
   {
     title: "Catalogue & Marketing",
     items: [
+      { href: "/admin/places", label: "Lieux & Repères" },
       { href: "/admin/promotions", label: "Promotions" },
       { href: "/admin/sponsoring", label: "Sponsoring" },
       { href: "/admin/reviews", label: "Avis clients" },

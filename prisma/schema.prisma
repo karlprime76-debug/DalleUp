@@ -839,3 +839,204 @@ model RestaurantPlacement {
   updatedAt      DateTime                 @updatedAt
   restaurant     Restaurant               @relation(fields: [restaurantId], references: [id])
 }
+
+// ============================================================================
+// Places & Addresses
+// ============================================================================
+
+enum PlaceType {
+  COUNTRY
+  DEPARTMENT
+  COMMUNE
+  ARRONDISSEMENT
+  NEIGHBORHOOD
+  DISTRICT
+
+  LANDMARK
+  ROUNDABOUT
+  ROAD
+  TRANSPORT_HUB
+  MARKET
+
+  RESTAURANT
+  MAQUIS
+  FAST_FOOD
+  CAFE
+  BAKERY
+  PASTRY_SHOP
+  BAR
+  BUVETTE
+  LOUNGE
+  NIGHTCLUB
+
+  GYM
+  SPORTS_CENTER
+  FOOTBALL_FIELD
+
+  SHOP
+  SUPERMARKET
+  MINI_MARKET
+  PHARMACY
+  CLINIC
+  HOSPITAL
+  BANK
+  ATM
+  GAS_STATION
+  HOTEL
+
+  SCHOOL
+  UNIVERSITY
+  CHURCH
+  MOSQUE
+  ADMIN_BUILDING
+
+  BUILDING
+  RESIDENCE
+  HOUSE_LANDMARK
+  PRIVATE_HOME
+
+  BEACH
+  TOURIST_PLACE
+  OTHER
+}
+
+enum PlaceSource {
+  MANUAL
+  ADMIN
+  USER_SUGGESTION
+  DRIVER_SUGGESTION
+  RESTAURANT_SUGGESTION
+  GOOGLE_PLACES
+  OPENSTREETMAP
+  IMPORT
+}
+
+enum DeliveryPriority {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum SuggestionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  MERGED
+}
+
+model Place {
+  id                String   @id @default(cuid())
+  name              String
+  slug              String
+  normalizedName    String
+  type              PlaceType
+
+  country           String   @default("Bénin")
+  department        String?
+  commune           String?
+  arrondissement    String?
+  neighborhood      String?
+  city              String?
+
+  addressText       String?
+  description       String?
+  aliases           Json?
+
+  latitude          Float?
+  longitude         Float?
+
+  source            PlaceSource @default(MANUAL)
+  externalId        String?
+  googlePlaceId     String?
+  osmId             String?
+  osmType           String?
+  osmTags           Json?
+
+  isPublic          Boolean  @default(true)
+  isVerified        Boolean  @default(false)
+  isActive          Boolean  @default(true)
+
+  deliveryEnabled   Boolean  @default(false)
+  deliveryPriority  DeliveryPriority?
+  baseDeliveryFee   Int?
+  estimatedEtaMin   Int?
+  estimatedEtaMax   Int?
+
+  popularityScore   Int      @default(0)
+  searchWeight      Int      @default(0)
+
+  parentId          String?
+  parent            Place?   @relation("PlaceHierarchy", fields: [parentId], references: [id])
+  children          Place[]  @relation("PlaceHierarchy")
+
+  savedAddresses    SavedAddress[]
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([slug, commune, type])
+  @@index([commune])
+  @@index([city])
+  @@index([type])
+  @@index([deliveryEnabled])
+  @@index([isActive])
+  @@index([normalizedName])
+  @@index([googlePlaceId])
+  @@index([osmId])
+}
+
+model SavedAddress {
+  id              String   @id @default(cuid())
+  userId          String?
+  restaurantId    String?
+  label           String?
+  recipientName   String?
+  phone           String?
+
+  addressText     String
+  commune         String?
+  neighborhood    String?
+  landmarkText    String?
+  instructions    String?
+
+  latitude        Float?
+  longitude       Float?
+
+  placeId         String?
+  place           Place?   @relation(fields: [placeId], references: [id])
+
+  isDefault       Boolean  @default(false)
+  isPrivate       Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([restaurantId])
+  @@index([placeId])
+}
+
+model PlaceSuggestion {
+  id              String   @id @default(cuid())
+  suggestedById   String?
+  suggestedByRole String?
+
+  name            String
+  type            PlaceType?
+  addressText     String?
+  commune         String?
+  neighborhood    String?
+  latitude        Float?
+  longitude       Float?
+  notes           String?
+
+  status          SuggestionStatus @default(PENDING)
+  reviewedById    String?
+  reviewedAt      DateTime?
+  createdPlaceId  String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([status])
+  @@index([commune])
+}
