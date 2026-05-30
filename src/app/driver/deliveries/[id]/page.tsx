@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
+import { MapPin, AlertTriangle, Lightbulb } from "lucide-react";
 import { DeliveryActions } from "@/components/driver/delivery-actions";
 import { DriverShell } from "@/components/layout/driver-shell";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { requireApprovedDriver } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db/prisma";
@@ -39,6 +41,11 @@ export default async function DriverDeliveryPage({ params }: { params: Promise<{
   const order = delivery.order;
   const gain = order?.deliveryFee ? Math.round(order.deliveryFee * 0.9) : 0;
 
+  const noteParts = order?.note?.split(" · ") ?? [];
+  const phoneFromNote = noteParts.find((p) => p.startsWith("Téléphone:"))?.replace("Téléphone: ", "") ?? order?.customer?.phone ?? "";
+  const placeIdFromNote = noteParts.find((p) => p.startsWith("placeId:"))?.replace("placeId: ", "");
+  const instructionsFromNote = noteParts.filter((p) => !p.startsWith("Téléphone:") && !p.startsWith("Code promo") && !p.startsWith("savedAddressId:") && !p.startsWith("placeId:")).join(" · ");
+
   return (
     <DriverShell title={`Livraison ${order?.orderNumber?.slice(-6) ?? delivery.id.slice(-6)}`} sections={driverNavSections}>
       <div className="grid gap-5">
@@ -55,17 +62,46 @@ export default async function DriverDeliveryPage({ params }: { params: Promise<{
             <div className="flex justify-between"><span>Adresse restaurant</span><span className="max-w-48 text-right font-bold">{order?.restaurant?.address}</span></div>
             <div className="flex justify-between"><span>Client</span><span className="font-bold">{order?.customer?.name ?? "Client"}</span></div>
             <div className="flex justify-between"><span>Adresse client</span><span className="max-w-48 text-right font-bold">{order?.address ? `${order.address.street}, ${order.address.city}` : "—"}</span></div>
-            {order?.customer?.phone ? <div className="flex justify-between"><span>Téléphone client</span><span className="font-bold">{order.customer.phone}</span></div> : null}
+            {phoneFromNote ? <div className="flex justify-between"><span>Téléphone client</span><span className="font-bold">{phoneFromNote}</span></div> : null}
             <div className="flex justify-between"><span>Total</span><span className="font-black text-dalle-orange">{formatPrice(order?.total ?? 0)}</span></div>
             <div className="flex justify-between"><span>Frais livraison</span><span className="font-bold">{formatPrice(order?.deliveryFee ?? 0)}</span></div>
             <div className="flex justify-between"><span>Votre gain (90%)</span><span className="font-black text-dalle-lime">{formatPrice(gain)}</span></div>
           </div>
         </Card>
 
-        {order?.note ? (
+        {instructionsFromNote ? (
           <Card className="p-5">
-            <h2 className="font-black">Instructions</h2>
-            <p className="mt-2 text-sm text-neutral-600">{order.note}</p>
+            <h2 className="font-black">Instructions client</h2>
+            <p className="mt-2 text-sm text-neutral-600">{instructionsFromNote}</p>
+          </Card>
+        ) : null}
+
+        {placeIdFromNote ? (
+          <Card className="p-5">
+            <div className="flex items-center gap-2">
+              <MapPin size={18} className="text-dalle-orange" />
+              <h2 className="font-black">Repère proche</h2>
+            </div>
+            <p className="mt-2 text-sm font-bold text-dalle-charcoal">{placeIdFromNote}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <a className="inline-flex items-center rounded-2xl border border-black/5 bg-white px-3 py-2 text-xs font-bold text-neutral-600" href={`/api/places/nearby?lat=6.36&lng=2.42&radius=500`} target="_blank">Lieux proches</a>
+            </div>
+          </Card>
+        ) : null}
+
+        {isAssignedToMe ? (
+          <Card className="p-5">
+            <h2 className="font-black">Signaler un problème</h2>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button variant="outline" size="sm">
+                <AlertTriangle size={14} className="mr-1" />
+                Lieu introuvable
+              </Button>
+              <Button variant="outline" size="sm">
+                <Lightbulb size={14} className="mr-1" />
+                Proposer un repère
+              </Button>
+            </div>
           </Card>
         ) : null}
 

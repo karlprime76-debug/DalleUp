@@ -11,6 +11,8 @@ export default function AdminPlacesPage() {
   const [places, setPlaces] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState({ commune: "", type: "", source: "", status: "active" });
+  const [duplicates, setDuplicates] = useState<Array<{ keep: { id: string; name: string; commune?: string }; remove: { id: string; name: string; commune?: string }; reason: string }>>([]);
+  const [dupLoading, setDupLoading] = useState(false);
 
   useEffect(() => {
     fetchPlaces();
@@ -131,6 +133,40 @@ export default function AdminPlacesPage() {
                 })}
               </tbody>
             </table>
+          </div>
+        )}
+      </Card>
+
+      <Card className="mt-5 p-5">
+        <div className="flex items-center justify-between">
+          <h2 className="font-black">Doublons suspects</h2>
+          <Button variant="outline" size="sm" onClick={async () => {
+            setDupLoading(true);
+            const res = await fetch(`/api/admin/places/duplicates?commune=${encodeURIComponent(filter.commune)}`);
+            const data = await res.json().catch(() => ({ duplicates: [] }));
+            setDuplicates(data.duplicates ?? []);
+            setDupLoading(false);
+          }} disabled={dupLoading}>
+            {dupLoading ? "Analyse…" : "Détecter"}
+          </Button>
+        </div>
+        {duplicates.length === 0 ? (
+          <p className="mt-3 text-sm text-neutral-500">Aucun doublon détecté.</p>
+        ) : (
+          <div className="mt-3 grid gap-2">
+            {duplicates.map((d, i) => (
+              <div key={i} className="flex items-center justify-between rounded-2xl border border-black/5 bg-white p-3">
+                <div className="text-sm">
+                  <p className="font-bold">Garder : <span className="text-dalle-lime">{d.keep.name}</span> · {d.keep.commune}</p>
+                  <p className="text-neutral-500">Supprimer : <span className="text-red-500">{d.remove.name}</span> · {d.remove.commune}</p>
+                  <p className="text-xs text-neutral-400">{d.reason}</p>
+                </div>
+                <Button variant="outline" size="sm" onClick={async () => {
+                  await fetch(`/api/admin/places/${d.remove.id}`, { method: "DELETE" });
+                  setDuplicates((prev) => prev.filter((x) => x.remove.id !== d.remove.id));
+                }}>Fusionner</Button>
+              </div>
+            ))}
           </div>
         )}
       </Card>
