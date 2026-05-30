@@ -16,9 +16,19 @@ import { getDeliveryFeeEstimate } from "@/lib/billing/delivery-fee";
 type SettingsPublic = {
   platformServiceFee?: number;
   allowCashPayment?: boolean;
+  allowMockPayment?: boolean;
+  nodeEnv?: string;
 };
 
-type CheckoutMethod = "PAYDUNYA" | "CASH_ON_DELIVERY";
+type CheckoutMethod = "PAYDUNYA" | "CASH_ON_DELIVERY" | "MOCK";
+
+type PromoResult = {
+  valid: boolean;
+  discountAmount: number;
+  discountType: string;
+  code: string;
+  message?: string;
+};
 
 type CreatePaymentResponse = {
   ok: boolean;
@@ -42,6 +52,8 @@ export function CheckoutPageClient() {
   const [selectedPlaceLabel, setSelectedPlaceLabel] = useState("");
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [promoCode, setPromoCode] = useState("");
+  const [promoResult, setPromoResult] = useState<PromoResult | null>(null);
+  const [promoValidating, setPromoValidating] = useState(false);
   const [settings, setSettings] = useState<SettingsPublic>({});
 
   useEffect(() => {
@@ -53,7 +65,9 @@ export function CheckoutPageClient() {
 
   const serviceFee = settings.platformServiceFee ?? 0;
   const computedDeliveryFee = useMemo(() => getDeliveryFeeEstimate({ zone: deliveryZone }), [deliveryZone]);
-  const computedTotal = useMemo(() => subtotal + (computedDeliveryFee ?? 0) + serviceFee, [subtotal, computedDeliveryFee, serviceFee]);
+  const promoDiscount = promoResult?.discountAmount ?? 0;
+  const computedSubtotalAfterPromo = Math.max(0, subtotal - promoDiscount);
+  const computedTotal = useMemo(() => computedSubtotalAfterPromo + (computedDeliveryFee ?? 0) + serviceFee, [computedSubtotalAfterPromo, computedDeliveryFee, serviceFee]);
   const hasAlcohol = items.some((item) => item.isAlcohol);
 
   const phoneOk = deliveryPhone.trim().length >= 6;
@@ -73,6 +87,36 @@ export function CheckoutPageClient() {
           : null;
 
   if (items.length === 0) return <main className="px-4 py-6"><div className="mx-auto max-w-3xl"><EmptyState title="Aucun article à payer" description="Votre panier est vide. Ajoutez un plat avant de passer au paiement." actionHref="/app/restaurants" actionLabel="Voir les restaurants" /></div></main>;
+
+  async function validatePromo() {
+    const code = promoCode.trim();
+    if (!code || !items[0]?.restaurantId) {
+      setPromoResult(null);
+      return;
+    }
+    setPromoValidating(true);
+    try {
+      const res = await fetch("/api/promos/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          restaurantId: items[0].restaurantId,
+          code,
+          subtotalAmount: subtotal,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!data?.valid) {
+        setPromoResult({ valid: false, discountAmount: 0, discountType: "", code, message: data?.message ?? "Code promo invalide." });
+        return;
+      }
+      setPromoResult({ valid: true, discountAmount: data.discountAmount ?? 0, discountType: data.promo?.discountType ?? "", code: data.promo?.code ?? code });
+    } catch {
+      setPromoResult(null);
+    } finally {
+      setPromoValidating(false);
+    }
+  }
 
   async function confirmOrder() {
     if (!canOrder) {
@@ -183,6 +227,12 @@ export function CheckoutPageClient() {
                     <input type="radio" name="paymentMethod" checked={paymentMethod === "CASH_ON_DELIVERY"} onChange={() => setPaymentMethod("CASH_ON_DELIVERY")} />
                   </label>
                 ) : null}
+                {settings.allowMockPayment ? (
+                  <label className={paymentMethod === "MOCK" ? "flex items-center justify-between rounded-3xl border-2 border-dalle-orange bg-orange-50 p-4" : "flex items-center justify-between rounded-3xl bg-neutral-50 p-4"}>
+                    <span className="flex items-center gap-3 font-black"><Smartphone size={20} /> Paiement test (Mock)</span>
+                    <input type="radio" name="paymentMethod" checked={paymentMethod === "MOCK"} onChange={() => setPaymentMethod("MOCK")} />
+                  </label>
+                ) : null}
                 <label className="flex items-center justify-between rounded-3xl bg-neutral-50 p-4 text-neutral-400">
                   <span className="flex items-center gap-3 font-black"><Smartphone size={20} /> Mobile Money direct</span>
                   <Badge variant="neutral">Bientôt</Badge>
@@ -192,7 +242,17 @@ export function CheckoutPageClient() {
             <Card className="p-5">
               <h2 className="font-black">Code promo</h2>
               <p className="mt-2 text-sm text-neutral-500">La réduction est vérifiée et appliquée côté serveur.</p>
-              <Input value={promoCode} onChange={(event) => setPromoCode(event.target.value.toUpperCase())} placeholder="Ex: DALLEUP10" className="mt-3" />
+              <div className="mt-3 flex gap-2">
+                <Input value={promoCode} onChange={(event) => { setPromoCode(event.target.value.toUpperCase()); setPromoResult(null); }} onBlur={validatePromo} placeholder="Ex: DALLEUP10" className="flex-1" />
+                <Button type="button" variant="outline" size="sm" onClick={validatePromo} disabled={promoValidating || !promoCode.trim()}>
+                  {promoValidating ? "Vérification…" : "Vérifier"}
+                </Button>
+              </div>
+              {promoResult?.valid ? (
+                <p className="mt-2 text-xs font-bold text-lime-600">Code accepté : -{formatPrice(promoResult.discountAmount)}</p>
+              ) : promoResult?.message ? (
+                <p className="mt-2 text-xs font-bold text-red-600">{promoResult.message}</p>
+              ) : null}
             </Card>
             {hasAlcohol ? (
               <Card className="p-5">
@@ -216,6 +276,12 @@ export function CheckoutPageClient() {
                 </div>
               ))}
               <div className="flex justify-between border-t pt-3"><span>Total articles</span><span>{formatPrice(subtotal)}</span></div>
+              {promoResult?.valid && promoResult.discountAmount > 0 ? (
+                <div className="flex justify-between text-lime-600">
+                  <span>Réduction ({promoResult.code})</span>
+                  <span>-{formatPrice(promoResult.discountAmount)}</span>
+                </div>
+              ) : null}
               <div className="flex justify-between">
                 <span>Livraison</span>
                 <span className={computedDeliveryFee === null ? "font-bold text-red-600" : ""}>

@@ -37,6 +37,8 @@ export async function GET() {
       trendingDishDailyPrice: settings.trendingDishDailyPrice,
       trendingDishWeeklyPrice: settings.trendingDishWeeklyPrice,
       trendingDishMonthlyPrice: settings.trendingDishMonthlyPrice,
+      allowMockPayment: process.env.NODE_ENV !== "production",
+      nodeEnv: process.env.NODE_ENV ?? "development",
     });
   } catch {
     return NextResponse.json(
